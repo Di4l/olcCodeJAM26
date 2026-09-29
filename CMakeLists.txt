@@ -33,9 +33,18 @@ message(STATUS "PGE3 BINARY: ${olcpixelgameengine3_BINARY_DIR}")
 # ============================================================
 # Game
 # ============================================================
+set(GAME_HEADERS
+    src/game.hpp
+)
+
+set(GAME_SOURCES
+    src/game.cpp
+    src/main.cpp
+)
 
 add_executable(${PROJECT_NAME}
-    src/main.cpp
+    ${GAME_HEADERS}
+    ${GAME_SOURCES}
 )
 
 target_link_libraries(${PROJECT_NAME}

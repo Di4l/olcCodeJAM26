@@ -1,16 +1,15 @@
 //-----------------------------------------------------------------------------
-#include "game.hpp"
+#include <olcPixelGameEngine3.h>
 //-----------------------------------------------------------------------------
 
-int main(int /*argc*/, char** /*argv*/)
+class Game : public olc::PixelGameEngine
 {
-    Game game;
+public:
+    Game();
 
-    if(game.Construct({320,200}, {4,4}))
-    {
-        game.Start();
-    }
+    bool OnUserCreate() override;
+    bool OnUserUpdate(float fElapsedTime) override;
 
-    return 0;
-}
+private:
+};
 //-----------------------------------------------------------------------------
