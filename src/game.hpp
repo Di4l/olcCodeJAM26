@@ -1,17 +1,23 @@
 //-----------------------------------------------------------------------------
 #include <olcPixelGameEngine3.h>
-#include <string_view>
-//-----------------------------------------------------------------------------
+#include "menu.hpp"
 //-----------------------------------------------------------------------------
 
-class Game : public olc::PixelGameEngine
+namespace codejam26
 {
-public:
-    Game();
+    //-------------------------------------------------------------------------
 
-    bool OnUserCreate() override;
-    bool OnUserUpdate(float fElapsedTime) override;
+    class Game : public olc::PixelGameEngine
+    {
+    public:
+        Game();
 
-private:
-};
+        bool OnUserCreate() override;
+        bool OnUserUpdate(float fElapsedTime) override;
+
+    private:
+        menu_s m_menu { nullptr };
+    };
+    //-------------------------------------------------------------------------
+}
 //-----------------------------------------------------------------------------

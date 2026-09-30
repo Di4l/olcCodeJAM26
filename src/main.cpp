@@ -5,11 +5,11 @@
 int main(int /*argc*/, char** /*argv*/)
 {
     constexpr std::string_view APP_NAME {"TBD"};
-    constexpr auto             PXL_SZ {4};
-    constexpr olc::vi2d        WINDOW_SZ { 320, 200 };
+    constexpr auto             PXL_SZ {2};
+    constexpr olc::vi2d        WINDOW_SZ { 640, 400 };
 
     //-- The game instance, our main application
-    Game game;
+    codejam26::Game game;
     //-- Main game configuration
     olc::PGEConfig cfg;
 

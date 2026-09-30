@@ -51,10 +51,12 @@ add_dependencies(pge3_static
 # Game
 # ============================================================
 set(GAME_HEADERS
+    src/menu.hpp
     src/game.hpp
 )
 
 set(GAME_SOURCES
+    src/menu.cpp
     src/game.cpp
     src/main.cpp
 )
