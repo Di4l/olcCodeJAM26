@@ -1,7 +1,6 @@
 //-----------------------------------------------------------------------------
 #include <olcPixelGameEngine3.h>
 
-#include <cassert>
 #include <functional>
 #include <vector>
 #include <memory>
@@ -16,8 +15,6 @@ namespace codejam26
     namespace menu
     {
         //---------------------------------------------------------------------
-        using action = std::function<bool(olc::vf2d const&)>;
-        //---------------------------------------------------------------------
 
         namespace item
         {
@@ -31,7 +28,6 @@ namespace codejam26
             item::action onClicked{};
         };
         //---------------------------------------------------------------------
-
         using item_s = std::shared_ptr<item_t>;
         using items  = std::vector<item_s>;
         //---------------------------------------------------------------------
@@ -41,21 +37,6 @@ namespace codejam26
     class menu_t : public olc::Image
     {
     public:
-        menu_t() = delete;
-        ~menu_t() = default;
-
-        template<typename T>
-        requires std::invocable<T, olc::vf2d const&> &&
-                std::same_as<
-                    std::invoke_result_t<T, olc::vf2d const&>,
-                    bool>
-        explicit menu_t(T onClick)
-            : olc::Image()
-            , m_onClick{std::move(onClick)}
-        {
-            assert(m_onClick);
-        }
-
         inline olc::vf2d& position() { return m_pos; }
         inline menu::items& items() { return m_items; }
 
@@ -64,22 +45,15 @@ namespace codejam26
             m_pos = pos;
         }
 
-        bool onClicked(
-            olc::PixelGameEngine* engine,
-            olc::vf2d const& pos);
+        bool onClicked(olc::PixelGameEngine* engine, olc::vf2d const& pos);
 
-        void draw(
-            olc::PixelGameEngine* engine,
-            olc::vf2d const& pos = INVALID_VF2D);
+        void draw(olc::PixelGameEngine* engine, olc::vf2d const& pos = INVALID_VF2D);
 
-        menu::item_s clickedItem(
-            olc::PixelGameEngine* engine,
-            olc::vf2d const& relpos);
+        menu::item_s clickedItem(olc::PixelGameEngine* engine, olc::vf2d const& relpos);
 
     private:
-        olc::vf2d    m_pos{0, 0};
-        menu::action m_onClick{};
-        menu::items  m_items{};
+        olc::vf2d   m_pos{0, 0};
+        menu::items m_items{};
 
         inline bool isInside(olc::vf2d const& pos);
     };
