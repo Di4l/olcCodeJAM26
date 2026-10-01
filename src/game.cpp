@@ -2,6 +2,9 @@
 #include "game.hpp"
 
 #include <iostream>
+//-- Include asset file headers
+// #include <retro_blop_18.hpp>
+#include <keyboard001.hpp>
 //-----------------------------------------------------------------------------
 using namespace codejam26;
 //-----------------------------------------------------------------------------
@@ -13,11 +16,14 @@ Game::Game()
 
 bool Game::OnUserCreate()
 {
+    //-- Initialize the audio engine: Install the extension and load sounds
+    initializeAudioEngine();
+
     m_menu = std::make_shared<menu_t>();
 
-    m_menu->items().emplace_back(std::make_shared<menu::item_t>("File", [](){ std::cout << "Pressed 'File'\n"; return true; }));
-    m_menu->items().emplace_back(std::make_shared<menu::item_t>("Open (Ctrl+O)", [](){ std::cout << "Pressed 'Open'\n"; return true; }));
-    m_menu->items().emplace_back(std::make_shared<menu::item_t>("Exit", [](){ std::cout << "Pressed 'Exit'\n"; return true; }));
+    m_menu->items().emplace_back(std::make_shared<menu::item_t>("File", [&](){ playClickSound(); std::cout << "Pressed 'File'\n"; return true; }));
+    m_menu->items().emplace_back(std::make_shared<menu::item_t>("Open (Ctrl+O)", [&](){ playClickSound(); std::cout << "Pressed 'Open'\n"; return true; }));
+    m_menu->items().emplace_back(std::make_shared<menu::item_t>("Exit", [&](){ playClickSound(); std::cout << "Pressed 'Exit'\n"; return true; }));
 
     CreateImage(*m_menu, {10, 10});
 
@@ -42,7 +48,7 @@ bool Game::OnUserUpdate(float fElapsedTime)
 
     //-- If we wanted to draw the manu at a different coordinates, we could
     //   pass a second parameter to draw() with the desired position
-    m_menu->draw(this);
+    m_menu->draw(this, {20, 10});
 
     //-- Get the mouse position
     auto lft_btn_status {mouse.GetButton(0)};
@@ -56,5 +62,22 @@ bool Game::OnUserUpdate(float fElapsedTime)
     }
 
     return true;
+}
+//-----------------------------------------------------------------------------
+
+void Game::playClickSound()
+{
+    if(m_sound_click.IsLoaded())
+        m_sound_click.Play();
+}
+//-----------------------------------------------------------------------------
+
+void Game::initializeAudioEngine()
+{
+    //-- Load the miniaudio extension
+    if(!InstallSystemExtension(&m_audio))
+        throw std::runtime_error("Failed to install olcPGEX3_miniaudio");
+
+    m_audio.CreateSoundFromMemory(m_sound_click, assets::keyboard001.data(), assets::keyboard001.size());
 }
 //-----------------------------------------------------------------------------
