@@ -11,6 +11,8 @@ using namespace codejam26;
 
 Game::Game()
 :olc::PixelGameEngine()
+, m_audio()
+, m_sound_click()
 , m_menu(nullptr)
 , m_map()
 , m_buttons_text()
@@ -28,7 +30,16 @@ bool Game::OnUserCreate()
     configureMap();
 
 
-    m_menu = std::make_shared<menu_t>();
+    m_menu = std::make_shared<menu_t>(
+    [&](olc::vf2d const& pos)
+    {
+        auto relative_pos{pos - m_menu->position()};
+        auto clicked_itm{m_menu->clickedItem(this, relative_pos)};
+
+        return clicked_itm && clicked_itm->onClicked
+            ? clicked_itm->onClicked()
+            : false;
+    });
 
     m_menu->items().emplace_back(std::make_shared<menu::item_t>("File", [&](){ playClickSound(); createRandomMenu(); std::cout << "Pressed 'File'\n"; return true; }));
     m_menu->items().emplace_back(std::make_shared<menu::item_t>("Open (Ctrl+O)", [&](){ playClickSound(); std::cout << "Pressed 'Open'\n"; return true; }));
@@ -69,36 +80,6 @@ bool Game::OnUserUpdate(float fElapsedTime)
     { //-- Get the menu that lies at original button press
         m_menu->onClicked(this, mouse_pos_pressed);
     }
-
-    //-- If we wanted to draw the manu at a different coordinates, we could
-    //   pass a second parameter to draw() with the desired position
-    m_menu->draw(this, {20, 10});
-
-    //-- Get the mouse position
-    auto lft_btn_status {mouse.GetButton(0)};
-    if(lft_btn_status.bPressed)
-    {
-        mouse_pos_pressed = mouse.GetPosition();
-    }
-    else if(lft_btn_status.bReleased)
-    { //-- Get the menu that lies at original button press
-        m_menu->onClicked(this, mouse_pos_pressed);
-    }
-
-    //-- If we wanted to draw the manu at a different coordinates, we could
-    //   pass a second parameter to draw() with the desired position
-    m_menu->draw(this);
-
-    //-- Get the mouse position
-    auto lft_btn_status {mouse.GetButton(0)};
-    if(lft_btn_status.bPressed)
-    {
-        mouse_pos_pressed = mouse.GetPosition();
-    }
-    else if(lft_btn_status.bReleased)
-    { //-- Get the menu that lies at original button press
-        m_menu->onClicked(mouse_pos_pressed);
-    } 
 
     return true;
 }
@@ -247,6 +228,7 @@ bool Game::incorrectButtonClicked()
     m_counter = 0; // Reset the counter to 0 if the user clicks on an incorrect item. This is to avoid showing the "Quit Game" option too soon.
     configureMap();
     createRandomMenu();
+    playClickSound();
     return true;
 }
 
@@ -255,8 +237,24 @@ bool Game::correctButtonClicked()
     std::cout << "Correct!! Pressed '" << m_current_pair.first << "'\n";
     ++m_counter; // Increment the counter if the user clicks on the correct item. This is used to determine when to show the "Quit Game" option in the menu and to know how many times the user has clicked on the menu items before the game ends.
     createRandomMenu();
+    playClickSound();
     std::cout << "Hint: " << m_current_pair.second << "\n";
     return true;
+}
+
+int Game::selectRandomIndex()
+{
+    bool showQuitGame = m_counter >= 2;
+    int selectedIndex;
+
+    do
+    {
+        selectedIndex = rand() % m_unused_indices.size();
+    }
+    while(!showQuitGame &&
+          m_buttons_text.at(m_unused_indices.at(selectedIndex)) == "Quit Game");
+
+    return selectedIndex;
 }
 //-----------------------------------------------------------------------------
 

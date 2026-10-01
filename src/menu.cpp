@@ -74,7 +74,15 @@ void menu_t::draw(olc::PixelGameEngine* engine, olc::vf2d const& pos)
 
     //-- Draw a rectangle around the "menu"
     auto msz = ge_draw.GetTargetSize();
-    ge_draw.RoundedRect({1,1}, {msz.x - 1, msz.y - 1}, 2.0f, olc::Colour::VERY_DARK_GREY);
+   ge_draw.RoundedRect(
+    {1.0f, 1.0f},
+    {
+        static_cast<float>(msz.x) - 1.0f,
+        static_cast<float>(msz.y) - 1.0f
+    },
+    2.0f,
+    olc::Colour::VERY_DARK_GREY
+);
 
     //-- Draw elements
     olc::vf2d ipos { MENU_MARGIN };

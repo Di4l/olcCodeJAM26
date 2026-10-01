@@ -26,21 +26,17 @@ namespace codejam26
         void playClickSound();
 
     private:
-        olc::ext::Miniaudio::AudioEngine m_audio;
-        olc::ext::Miniaudio::Sound       m_sound_click;
-
-        menu_s m_menu { nullptr };
-
         void initializeAudioEngine();
-    };
     //-------------------------------------------------------------------------
-}
         void configureMap();
         void eraseUsedIndices(int index);
         bool incorrectButtonClicked();
         bool correctButtonClicked();
         int selectRandomIndex();
     private:
+        olc::ext::Miniaudio::AudioEngine m_audio;
+        olc::ext::Miniaudio::Sound       m_sound_click;
+
         menu_s m_menu;
         std::map<std::string, std::string> m_map; // Map to store the items and their corresponding hints
         std::vector<std::string> m_buttons_text; // Vector to store the items that will be shown in the menu as the text of the buttons to click in the game.
