@@ -7,9 +7,19 @@ static constexpr olc::vf2d MENU_MARGIN   { 2.0, 2.0 };
 static constexpr auto      MENU_ITEM_GAP { 2.0 };
 //-----------------------------------------------------------------------------
 
-bool menu_t::onClicked(olc::vf2d const& pos)
+bool menu_t::onClicked(olc::PixelGameEngine* engine, olc::vf2d const& pos)
 {
-    return isInside(pos) ? m_onClick(pos) : false;
+    if(!engine) return false;
+    //-- If the click was done in the menu area...
+    if(isInside(pos))
+    {   //-- Calculate the relative pointer position. (Relative to the menu)
+        auto relative_pos { pos - m_pos };
+        //-- Get the item clicked (if any)
+        auto clicked_itm  { clickedItem(engine, relative_pos) };
+        //-- Call callback (if item clicked)
+        return clicked_itm && clicked_itm->onClicked ? clicked_itm->onClicked() : false;
+    }
+    return false;
 }
 //-----------------------------------------------------------------------------
 
