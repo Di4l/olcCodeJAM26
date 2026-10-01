@@ -13,16 +13,7 @@ Game::Game()
 
 bool Game::OnUserCreate()
 {
-    m_menu = std::make_shared<menu_t>(
-        [&](olc::vf2d const& pos)
-        {
-            //-- Calculate the relative pointer position. (Relative to the menu)
-            auto relative_pos { pos - m_menu->position() };
-            //-- Get the item clicked (if any)
-            auto clicked_itm  { m_menu->clickedItem(this, relative_pos) };
-            //-- Call callback (if item clicked)
-            return clicked_itm && clicked_itm->onClicked ? clicked_itm->onClicked() : false;
-        });
+    m_menu = std::make_shared<menu_t>();
 
     m_menu->items().emplace_back(std::make_shared<menu::item_t>("File", [](){ std::cout << "Pressed 'File'\n"; return true; }));
     m_menu->items().emplace_back(std::make_shared<menu::item_t>("Open (Ctrl+O)", [](){ std::cout << "Pressed 'Open'\n"; return true; }));
@@ -61,7 +52,7 @@ bool Game::OnUserUpdate(float fElapsedTime)
     }
     else if(lft_btn_status.bReleased)
     { //-- Get the menu that lies at original button press
-        m_menu->onClicked(mouse_pos_pressed);
+        m_menu->onClicked(this, mouse_pos_pressed);
     }
 
     return true;
