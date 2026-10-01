@@ -1,19 +1,40 @@
 //-----------------------------------------------------------------------------
 #include <olcPixelGameEngine3.h>
+
+//-- Both this files need to be included in the header, since the extension is
+//   not a full interface and uses types defined in miniaudio.h
+#include <miniaudio.h>
+#include <olcPGEX3_Miniaudio.h>
+
 #include "menu.hpp"
 #include <map>
 //-----------------------------------------------------------------------------
 
-class Game : public olc::PixelGameEngine
+namespace codejam26
 {
-public:
-    Game();
+    //-------------------------------------------------------------------------
+
+    class Game : public olc::PixelGameEngine
+    {
+    public:
+        Game();
 
         bool OnUserCreate() override;
         bool OnUserUpdate(float fElapsedTime) override;
         void createRandomMenu();
 
+        void playClickSound();
+
     private:
+        olc::ext::Miniaudio::AudioEngine m_audio;
+        olc::ext::Miniaudio::Sound       m_sound_click;
+
+        menu_s m_menu { nullptr };
+
+        void initializeAudioEngine();
+    };
+    //-------------------------------------------------------------------------
+}
         void configureMap();
         void eraseUsedIndices(int index);
         bool incorrectButtonClicked();

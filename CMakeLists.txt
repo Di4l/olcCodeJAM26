@@ -10,6 +10,23 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # ============================================================
+# Make available a function to embed assets
+# ============================================================
+include("${CMAKE_SOURCE_DIR}/cmake/EmbedAsset.cmake")
+
+# ============================================================
+# Miniaudio
+# ============================================================
+
+set(MINIAUDIO_DIR "${CMAKE_BINARY_DIR}/_deps/miniaudio")
+
+file(DOWNLOAD
+    "https://raw.githubusercontent.com/mackron/miniaudio/master/miniaudio.h"
+    "${MINIAUDIO_DIR}/miniaudio.h"
+    TLS_VERIFY ON
+)
+
+# ============================================================
 # olcPixelGameEngine3
 # ============================================================
 
@@ -30,6 +47,14 @@ FetchContent_GetProperties(olcPixelGameEngine3)
 message(STATUS "PGE3 SOURCE: ${olcpixelgameengine3_SOURCE_DIR}")
 message(STATUS "PGE3 BINARY: ${olcpixelgameengine3_BINARY_DIR}")
 
+# BEGIN: Apply patch on the miniaudio extension of the engine
+include("${CMAKE_SOURCE_DIR}/cmake/FixPGE3Miniaudio.cmake")
+
+fix_pge3_miniaudio(
+    "${olcpixelgameengine3_SOURCE_DIR}"
+)
+# END: Apply patch
+
 # ============================================================
 # PGE3 static library
 # ============================================================
@@ -40,6 +65,9 @@ add_library(pge3_static STATIC
 target_include_directories(pge3_static
     PRIVATE
         ${olcpixelgameengine3_SOURCE_DIR}
+        # The miniaudio extension olcPGEX3_Miniaudio.h requires
+        ${olcpixelgameengine3_SOURCE_DIR}/extensions/miniaudio
+        ${MINIAUDIO_DIR}
 )
 
 # The generated header must exist before pge3.cpp is compiled.
@@ -51,10 +79,12 @@ add_dependencies(pge3_static
 # Game
 # ============================================================
 set(GAME_HEADERS
+    src/menu.hpp
     src/game.hpp
 )
 
 set(GAME_SOURCES
+    src/menu.cpp
     src/game.cpp
     src/main.cpp
 )
@@ -64,10 +94,11 @@ add_executable(${PROJECT_NAME}
     ${GAME_SOURCES}
 )
 
-target_include_directories(${PROJECT_NAME}
-    PRIVATE
-        src
-        ${olcpixelgameengine3_SOURCE_DIR}
+target_include_directories(${PROJECT_NAME} PRIVATE
+    src
+    ${olcpixelgameengine3_SOURCE_DIR}
+    ${olcpixelgameengine3_SOURCE_DIR}/extensions/miniaudio
+    ${MINIAUDIO_DIR}
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -75,6 +106,16 @@ target_link_libraries(${PROJECT_NAME}
         pge3_static
 )
 
+# Embed the assets into the binary
+embed_asset(${PROJECT_NAME}
+    "${CMAKE_SOURCE_DIR}/assets/retro_blop_18.wav"
+    retro_blop_18
+)
+
+embed_asset(${PROJECT_NAME}
+    "${CMAKE_SOURCE_DIR}/assets/keyboard_001.wav"
+    keyboard001
+)
 # ============================================================
 # Linux dependencies
 # ============================================================
