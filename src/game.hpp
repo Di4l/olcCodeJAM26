@@ -25,7 +25,6 @@ namespace codejam26
         void playClickSound();
 
     private:
-
         void initializeAudioEngine();
         void configureMap();
 

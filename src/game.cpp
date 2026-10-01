@@ -208,6 +208,7 @@ bool Game::incorrectButtonClicked()
     m_counter = 0; // Reset the counter to 0 if the user clicks on an incorrect item. This is to avoid showing the "Quit Game" option too soon.
     configureMap();
     createRandomMenu();
+    playClickSound();
     return true;
 }
 //-----------------------------------------------------------------------------
@@ -217,8 +218,24 @@ bool Game::correctButtonClicked()
     LOGGER.debug("Correct!! Pressed '%s'", m_current_pair.first);
     ++m_counter; // Increment the counter if the user clicks on the correct item. This is used to determine when to show the "Quit Game" option in the menu and to know how many times the user has clicked on the menu items before the game ends.
     createRandomMenu();
+    playClickSound();
     std::cout << "Hint: " << m_current_pair.second << "\n";
     return true;
+}
+
+int Game::selectRandomIndex()
+{
+    bool showQuitGame = m_counter >= 2;
+    int selectedIndex;
+
+    do
+    {
+        selectedIndex = rand() % m_unused_indices.size();
+    }
+    while(!showQuitGame &&
+          m_buttons_text.at(m_unused_indices.at(selectedIndex)) == "Quit Game");
+
+    return selectedIndex;
 }
 //-----------------------------------------------------------------------------
 
