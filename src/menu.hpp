@@ -49,6 +49,7 @@ namespace codejam26
 
         void draw(olc::PixelGameEngine* engine, olc::vf2d const& pos = INVALID_VF2D);
 
+    protected:
         menu::item_s clickedItem(olc::PixelGameEngine* engine, olc::vf2d const& relpos);
 
     private:
