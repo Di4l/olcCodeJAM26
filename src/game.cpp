@@ -11,6 +11,8 @@ using namespace codejam26;
 
 bool Game::OnUserCreate()
 {
+    //-- Feed the rand() function with a seed
+    std::srand(std::time({}));
     //-- Initialize the audio engine: Install the extension and load sounds
     initializeAudioEngine();
     //-- Configure Menu map
