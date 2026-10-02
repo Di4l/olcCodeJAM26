@@ -40,7 +40,7 @@ menu::item_s menu_t::clickedItem(olc::PixelGameEngine* engine, olc::vf2d const& 
         //   the current item is the one being clicked!!
         if((msz + isz).y > relpos.y)
         {
-            MN_LOGGER.debug("Clicked on element '%s'", itm->text);
+            MN_LOGGER.debug("Clicked on element '{}'", itm->text);
             return itm;
         }
         msz.y += (isz.y + MENU_ITEM_GAP);

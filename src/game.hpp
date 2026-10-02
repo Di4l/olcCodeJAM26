@@ -10,6 +10,8 @@
 
 #include "menu.hpp"
 #include "logger.hpp"
+
+#include <map>
 //-----------------------------------------------------------------------------
 
 namespace codejam26

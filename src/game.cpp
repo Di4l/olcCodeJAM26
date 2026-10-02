@@ -12,19 +12,21 @@ using namespace codejam26;
 bool Game::OnUserCreate()
 {
     //-- Feed the rand() function with a seed
+    LOGGER.info("Initialize random seed");
     std::srand(std::time({}));
     //-- Initialize the audio engine: Install the extension and load sounds
-    LOGGER.info("Initialize Audio Engine");
+    LOGGER.info("Initialize audio engine");
     initializeAudioEngine();
-    LOGGER.info("Initialize Menus");
+    LOGGER.info("Initialize menus");
     configureMap();
 
-    LOGGER.info("Create a sample menu");
-    m_menu = std::make_shared<menu_t>();
+    // LOGGER.info("Create a sample menu");
+    // m_menu = std::make_shared<menu_t>();
 
-    m_menu->items().emplace_back(std::make_shared<menu::item_t>("File", [&](){ playClickSound(); std::cout << "Pressed 'File'\n"; return true; }));
-    m_menu->items().emplace_back(std::make_shared<menu::item_t>("Open (Ctrl+O)", [&](){ playClickSound(); std::cout << "Pressed 'Open'\n"; return true; }));
-    m_menu->items().emplace_back(std::make_shared<menu::item_t>("Exit", [&](){ playClickSound(); std::cout << "Pressed 'Exit'\n"; return true; }));
+    // m_menu->items().emplace_back(std::make_shared<menu::item_t>("File", [&](){ playClickSound(); std::cout << "Pressed 'File'\n"; return true; }));
+    // m_menu->items().emplace_back(std::make_shared<menu::item_t>("Open (Ctrl+O)", [&](){ playClickSound(); std::cout << "Pressed 'Open'\n"; return true; }));
+    // m_menu->items().emplace_back(std::make_shared<menu::item_t>("Exit", [&](){ playClickSound(); std::cout << "Pressed 'Exit'\n"; return true; }));
+    createRandomMenu();
 
     CreateImage(*m_menu, {10, 10});
 
@@ -130,16 +132,18 @@ void Game::configureMap()
         ++index;
     }
 
-    LOGGER.info("Map reconfigured. %d available items", m_map.size());
+    LOGGER.info("Map reconfigured. {0:d} available items", m_map.size());
 }
 //-----------------------------------------------------------------------------
 
 void Game::createRandomMenu()
 {
-#ifdef (SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_DEBUG)
+#ifdef SPDLOG_ACTIVE_LEVEL
+#  if (SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_DEBUG)
     LOGGER.debug("Unused: ")
     for (int index : m_unused_indices)
         LOGGER.debug("'%s'", m_buttons_text[index]);
+#  endif
 #endif
     m_menu.reset(new menu_t());
     
@@ -157,8 +161,8 @@ void Game::createRandomMenu()
     eraseUsedIndices(selectedIndex); // Remove the index of the item that has been stored as the correct button to click in the game. This will be used to avoid showing the same item again in the menu.
    
     m_menu->items().emplace_back(std::make_shared<menu::item_t>(buttonText, std::bind_front(&Game::correctButtonClicked, this))); // Add the correct item to the menu with its corresponding callback
-    LOGGER.debug("Correct button: '%s'", m_current_pair.first);
-    LOGGER.debug(" - Hint: '%s'", m_current_pair.second);   // Show the hint for the item that the user has to click on in the game.
+    LOGGER.debug("Correct button: '{}'", m_current_pair.first);
+    LOGGER.debug(" - Hint: '{}'", m_current_pair.second);   // Show the hint for the item that the user has to click on in the game.
 
     for(std::size_t i = 0; i < m_unused_indices.size() && i < randomNumberOfItems; ++i)
     {            
@@ -199,7 +203,7 @@ void Game::eraseUsedIndices(int index)
 
 bool Game::incorrectButtonClicked()
 {
-    LOGGER.debug("Incorrect!! Pressed '%s'", m_current_pair.first);
+    LOGGER.debug("Incorrect!! Pressed '{}'", m_current_pair.first);
     m_counter = 0; // Reset the counter to 0 if the user clicks on an incorrect item. This is to avoid showing the "Quit Game" option too soon.
     configureMap();
     createRandomMenu();
@@ -210,28 +214,12 @@ bool Game::incorrectButtonClicked()
 
 bool Game::correctButtonClicked()
 {
-    LOGGER.debug("Correct!! Pressed '%s'", m_current_pair.first);
+    LOGGER.debug("Correct!! Pressed '{}'", m_current_pair.first);
     ++m_counter; // Increment the counter if the user clicks on the correct item. This is used to determine when to show the "Quit Game" option in the menu and to know how many times the user has clicked on the menu items before the game ends.
     createRandomMenu();
     playClickSound();
-    std::cout << "Hint: " << m_current_pair.second << "\n";
+    LOGGER.info("Hint: {}", m_current_pair.second);
     return true;
-}
-//-----------------------------------------------------------------------------
-
-int Game::selectRandomIndex()
-{
-    bool showQuitGame = m_counter >= 2;
-    int selectedIndex;
-
-    do
-    {
-        selectedIndex = rand() % m_unused_indices.size();
-    }
-    while(!showQuitGame &&
-          m_buttons_text.at(m_unused_indices.at(selectedIndex)) == "Quit Game");
-
-    return selectedIndex;
 }
 //-----------------------------------------------------------------------------
 
