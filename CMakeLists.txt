@@ -9,10 +9,23 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+include(FetchContent)
+
 # ============================================================
 # Make available a function to embed assets
 # ============================================================
 include("${CMAKE_SOURCE_DIR}/cmake/EmbedAsset.cmake")
+
+# ============================================================
+# Use spdlog for logging
+# ============================================================
+FetchContent_Declare(
+    spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog.git
+    GIT_TAG        v1.17.0
+)
+
+FetchContent_MakeAvailable(spdlog)
 
 # ============================================================
 # Miniaudio
@@ -29,8 +42,6 @@ file(DOWNLOAD
 # ============================================================
 # olcPixelGameEngine3
 # ============================================================
-
-include(FetchContent)
 
 FetchContent_Declare(
     olcPixelGameEngine3
@@ -62,12 +73,11 @@ add_library(pge3_static STATIC
     src/pge3.cpp
 )
 
-target_include_directories(pge3_static
-    PRIVATE
-        ${olcpixelgameengine3_SOURCE_DIR}
-        # The miniaudio extension olcPGEX3_Miniaudio.h requires
-        ${olcpixelgameengine3_SOURCE_DIR}/extensions/miniaudio
-        ${MINIAUDIO_DIR}
+target_include_directories(pge3_static PRIVATE
+    ${olcpixelgameengine3_SOURCE_DIR}
+    # The miniaudio extension olcPGEX3_Miniaudio.h requires
+    ${olcpixelgameengine3_SOURCE_DIR}/extensions/miniaudio
+    ${MINIAUDIO_DIR}
 )
 
 # The generated header must exist before pge3.cpp is compiled.
@@ -79,11 +89,13 @@ add_dependencies(pge3_static
 # Game
 # ============================================================
 set(GAME_HEADERS
+    src/logger.hpp
     src/menu.hpp
     src/game.hpp
 )
 
 set(GAME_SOURCES
+    src/logger.cpp
     src/menu.cpp
     src/game.cpp
     src/main.cpp
@@ -101,9 +113,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${MINIAUDIO_DIR}
 )
 
-target_link_libraries(${PROJECT_NAME}
-    PRIVATE
-        pge3_static
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    spdlog::spdlog
+    pge3_static
 )
 
 # Embed the assets into the binary

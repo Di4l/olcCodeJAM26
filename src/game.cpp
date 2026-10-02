@@ -9,16 +9,13 @@
 using namespace codejam26;
 //-----------------------------------------------------------------------------
 
-Game::Game()
-{
-}
-//-----------------------------------------------------------------------------
-
 bool Game::OnUserCreate()
 {
     //-- Initialize the audio engine: Install the extension and load sounds
+    LOGGER.info("Initialize Audio Engine");
     initializeAudioEngine();
 
+    LOGGER.info("Create a sample menu");
     m_menu = std::make_shared<menu_t>();
 
     m_menu->items().emplace_back(std::make_shared<menu::item_t>("File", [&](){ playClickSound(); std::cout << "Pressed 'File'\n"; return true; }));
@@ -27,6 +24,7 @@ bool Game::OnUserCreate()
 
     CreateImage(*m_menu, {10, 10});
 
+    LOGGER.info("Game instance created and initialized");
     return true;
 }
 //-----------------------------------------------------------------------------
@@ -69,6 +67,8 @@ void Game::playClickSound()
 {
     if(m_sound_click.IsLoaded())
         m_sound_click.Play();
+    else
+        LOGGER.error("Click sound not loaded. Cannot play it!");
 }
 //-----------------------------------------------------------------------------
 
@@ -76,8 +76,12 @@ void Game::initializeAudioEngine()
 {
     //-- Load the miniaudio extension
     if(!InstallSystemExtension(&m_audio))
+    {
+        LOGGER.error("Failed to install olcPGEX3_miniaudio");
         throw std::runtime_error("Failed to install olcPGEX3_miniaudio");
+    }
 
-    m_audio.CreateSoundFromMemory(m_sound_click, assets::keyboard001.data(), assets::keyboard001.size());
+    if(!m_audio.CreateSoundFromMemory(m_sound_click, assets::keyboard001.data(), assets::keyboard001.size()))
+        LOGGER.error("Could not load audio 'keyboard001' from memory");
 }
 //-----------------------------------------------------------------------------
