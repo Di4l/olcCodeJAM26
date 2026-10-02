@@ -22,13 +22,12 @@ namespace codejam26
         bool OnUserCreate() override;
         bool OnUserUpdate(float /*fElapsedTime*/) override;
 
+        void createRandomMenu();
         void playClickSound();
 
     private:
         void initializeAudioEngine();
         void configureMap();
-
-        void createRandomMenu();
 
         void eraseUsedIndices(int index);
         bool incorrectButtonClicked();

@@ -11,6 +11,8 @@ using namespace codejam26;
 
 bool Game::OnUserCreate()
 {
+    //-- Feed the rand() function with a seed
+    std::srand(std::time({}));
     //-- Initialize the audio engine: Install the extension and load sounds
     LOGGER.info("Initialize Audio Engine");
     initializeAudioEngine();
@@ -31,7 +33,7 @@ bool Game::OnUserCreate()
 }
 //-----------------------------------------------------------------------------
 
-bool Game::OnUserUpdate(float fElapsedTime)
+bool Game::OnUserUpdate(float /*fElapsedTime*/)
 {
     //-- Store where the mouse was first pressed
     static olc::vf2d mouse_pos_pressed {};
@@ -68,7 +70,8 @@ bool Game::OnUserUpdate(float fElapsedTime)
 void Game::configureMap()
 {
     // Configure the map with menu items and their corresponding messages to show as hints
-    m_map.clear();
+    m_map.clear();  //-- Unnecesary, since this method is called at contruction and the map is empty then.
+    //-- I'd rather use: m_map["File"] = "Every journey begins with a couple of words.";
     m_map.insert({"File", "Every journey begins with a couple of words."});
     m_map.insert({"Open", "Some things are meant to be opened, others not..."});
     m_map.insert({"Close Menu", "Sometimes the way forward is to leave."});
@@ -138,18 +141,10 @@ void Game::createRandomMenu()
     for (int index : m_unused_indices)
         LOGGER.debug("'%s'", m_buttons_text[index]);
 #endif
-    m_menu = std::make_shared<menu_t>(
-        [&](olc::vf2d const& pos)
-        {
-            //-- Calculate the relative pointer position. (Relative to the menu)
-            auto relative_pos { pos - m_menu->position() };
-            //-- Get the item clicked (if any)
-            auto clicked_itm  { m_menu->clickedItem(this, relative_pos) };
-            //-- Call callback (if item clicked)
-            return clicked_itm && clicked_itm->onClicked ? clicked_itm->onClicked() : false;
-        });
+    m_menu.reset(new menu_t());
     
-    int randomNumberOfItems = rand() % 7  + 1; // Generate a random number between 1 and 7 this will be the elements shown in the menu
+    //-- Declare as size_t to avoid warning on the for loop below when comparing variables...
+    size_t randomNumberOfItems = rand() % 7  + 1; // Generate a random number between 1 and 7 this will be the elements shown in the menu
 
     int selectedIndex = selectRandomIndex();
     
@@ -222,6 +217,7 @@ bool Game::correctButtonClicked()
     std::cout << "Hint: " << m_current_pair.second << "\n";
     return true;
 }
+//-----------------------------------------------------------------------------
 
 int Game::selectRandomIndex()
 {
