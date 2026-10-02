@@ -1,4 +1,6 @@
 //-----------------------------------------------------------------------------
+#pragma once
+//-----------------------------------------------------------------------------
 #include <olcPixelGameEngine3.h>
 
 //-- Both this files need to be included in the header, since the extension is
@@ -7,6 +9,7 @@
 #include <olcPGEX3_Miniaudio.h>
 
 #include "menu.hpp"
+#include "logger.hpp"
 //-----------------------------------------------------------------------------
 
 namespace codejam26
@@ -16,10 +19,8 @@ namespace codejam26
     class Game : public olc::PixelGameEngine
     {
     public:
-        Game();
-
         bool OnUserCreate() override;
-        bool OnUserUpdate(float fElapsedTime) override;
+        bool OnUserUpdate(float /*fElapsedTime*/) override;
 
         void playClickSound();
 

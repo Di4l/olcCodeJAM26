@@ -3,8 +3,10 @@
 //-----------------------------------------------------------------------------
 using namespace codejam26;
 //-----------------------------------------------------------------------------
-static constexpr olc::vf2d MENU_MARGIN   { 2.0, 2.0 };
-static constexpr auto      MENU_ITEM_GAP { 2.0 };
+static constexpr olc::vf2d MENU_MARGIN   { 2.0, 2.0      };
+static constexpr auto      MENU_HMARGIN  { MENU_MARGIN.x };
+static constexpr auto      MENU_YMARGIN  { MENU_MARGIN.y };
+static constexpr auto      MENU_ITEM_GAP { 2.0           };
 //-----------------------------------------------------------------------------
 
 bool menu_t::onClicked(olc::PixelGameEngine* engine, olc::vf2d const& pos)
@@ -37,10 +39,14 @@ menu::item_s menu_t::clickedItem(olc::PixelGameEngine* engine, olc::vf2d const& 
         //-- If adding the next element goes below the click on the mouse,
         //   the current item is the one being clicked!!
         if((msz + isz).y > relpos.y)
+        {
+            MN_LOGGER.debug("Clicked on element '%s'", itm->text);
             return itm;
+        }
         msz   += isz;
-        msz.x += MENU_ITEM_GAP;
+        msz.y += MENU_ITEM_GAP;
     }
+    MN_LOGGER.debug("Could not find the menu element clicked upon");
     return nullptr;
 }
 //-----------------------------------------------------------------------------
@@ -62,11 +68,11 @@ void menu_t::draw(olc::PixelGameEngine* engine, olc::vf2d const& pos)
     {
         auto isz { ge_draw.GetTextSize(itm->text, true) };
         //-- WARN: Assume all items in this menu are arrenged vertically
-        menu_sz.x  = std::max<float>(isz.x + 2.0, menu_sz.x) + 2.0;
-        menu_sz.y += (isz.y + 2.0);
+        menu_sz.x  = std::max<float>(isz.x + MENU_HMARGIN, menu_sz.x) + MENU_HMARGIN;
+        menu_sz.y += (isz.y + MENU_ITEM_GAP);
     }
     //-- Resize menu to accomodate all its entries
-    Resize(menu_sz + 2.0);
+    Resize(menu_sz + MENU_MARGIN + MENU_MARGIN);
 
     //-- Start drawing the menu
     ge_draw.SetTarget(*this);
