@@ -140,9 +140,9 @@ void Game::createRandomMenu()
 {
 #ifdef SPDLOG_ACTIVE_LEVEL
 #  if (SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_DEBUG)
-    LOGGER.debug("Unused: ")
+    LOGGER.debug("Unused: ");
     for (int index : m_unused_indices)
-        LOGGER.debug("'%s'", m_buttons_text[index]);
+        LOGGER.debug("'{}'", m_buttons_text[index]);
 #  endif
 #endif
     m_menu.reset(new menu_t());
