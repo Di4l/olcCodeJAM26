@@ -1,6 +1,7 @@
 //-----------------------------------------------------------------------------
 #include "game.hpp"
 #include "main_menu_options.hpp"
+
 #include <iostream>
 //-- Include asset file headers
 // #include <retro_blop_18.hpp>
@@ -43,13 +44,14 @@ bool Game::OnUserCreate()
             }
         )
     );
+
     main_menu->items().emplace_back(
         std::make_shared<menu::item_t>(
             "Instructions",
             [this]()
             {
-                LOGGER.info("EXPLICATION");
-                m_current_state = MainMenuOptions::EXPLICATION;
+                LOGGER.info("EXPLANATION");
+                m_current_state = MainMenuOptions::EXPLANATION;
                 return true;
             }
         )
@@ -79,7 +81,6 @@ bool Game::OnUserCreate()
     LOGGER.info("Game instance created and initialized");
     return true;
 }
-
 //-----------------------------------------------------------------------------
 
 bool Game::OnUserUpdate(float /*fElapsedTime*/)
@@ -96,9 +97,9 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
         main_menu->draw(this, halfScreen);
         main_menu->configureMouse(this, mouse);
     }
-    else if (m_current_state == MainMenuOptions::EXPLICATION)
+    else if (m_current_state == MainMenuOptions::EXPLANATION)
     {
-        ::std::string explicationText = "Valid text";
+        std::string explicationText = "Valid text";
         main_menu->draw(this, halfScreen);
         main_menu->configureMouse(this, mouse);
 
@@ -120,7 +121,6 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
 
     return running;
 }
-
 //-----------------------------------------------------------------------------
 
 void Game::configureMap()

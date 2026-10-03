@@ -3,21 +3,19 @@
 //-----------------------------------------------------------------------------
 using namespace codejam26;
 //-----------------------------------------------------------------------------
-static constexpr olc::vf2d MENU_MARGIN {8.0, 8.0};
-static constexpr auto MENU_HMARGIN {MENU_MARGIN.x};
-static constexpr auto MENU_YMARGIN {MENU_MARGIN.y};
-static constexpr auto MENU_ITEM_GAP {3.0};
+static constexpr olc::vf2d MENU_MARGIN   {8.0, 8.0};
+static constexpr auto      MENU_HMARGIN  {MENU_MARGIN.x};
+static constexpr auto      MENU_YMARGIN  {MENU_MARGIN.y};
+static constexpr auto      MENU_ITEM_GAP {3.0};
 //-----------------------------------------------------------------------------
 
 bool menu_t::onClicked(olc::PixelGameEngine* engine, olc::vf2d const& pos)
 {
-    if (! engine)
-    {
+    if(!engine)
         return false;
-    }
     //-- If the click was done in the menu area...
     if (isInside(pos))
-    { //-- Calculate the relative pointer position. (Relative to the menu)
+    {   //-- Calculate the relative pointer position. (Relative to the menu)
         auto relative_pos {pos - m_pos};
         //-- Get the item clicked (if any)
         auto clicked_itm {clickedItem(engine, relative_pos)};
@@ -26,15 +24,12 @@ bool menu_t::onClicked(olc::PixelGameEngine* engine, olc::vf2d const& pos)
     }
     return false;
 }
-
 //-----------------------------------------------------------------------------
 
 menu::item_s menu_t::clickedItem(olc::PixelGameEngine* engine, olc::vf2d const& relpos)
 {
-    if (! engine)
-    {
+    if(!engine)
         return nullptr;
-    }
     //-- This is called once it has been checked that the click has been
     //   done in this menu. The coordinates of the clicked within the menu
     //   is provided in relpos
@@ -59,18 +54,14 @@ menu::item_s menu_t::clickedItem(olc::PixelGameEngine* engine, olc::vf2d const& 
 
 void menu_t::draw(olc::PixelGameEngine* engine, olc::vf2d const& pos)
 {
-    if (! engine)
-    {
-        return;
-    }
+    if(!engine)
+    return;
 
     auto& ge_draw {engine->GetDraw()};
 
     //-- If position has been informed, update it
     if (&pos != &INVALID_VF2D)
-    {
         m_pos = pos;
-    }
 
     //-- Store the total size of the menu
     olc::vf2d menu_sz {0.0, 0.0};
@@ -79,7 +70,7 @@ void menu_t::draw(olc::PixelGameEngine* engine, olc::vf2d const& pos)
     {
         auto isz {ge_draw.GetTextSize(itm->text, true)};
         //-- WARN: Assume all items in this menu are arrenged vertically
-        menu_sz.x = std::max<float>(isz.x + MENU_HMARGIN, menu_sz.x) + MENU_HMARGIN;
+        menu_sz.x  = std::max<float>(isz.x + MENU_HMARGIN, menu_sz.x) + MENU_HMARGIN;
         menu_sz.y += (isz.y + MENU_ITEM_GAP);
     }
     //-- Resize menu to accomodate all its entries
@@ -106,27 +97,28 @@ void menu_t::draw(olc::PixelGameEngine* engine, olc::vf2d const& pos)
     ge_draw.SetTarget(engine->GetScreen());
     ge_draw.Image(*this, m_pos);
 }
-
 //-----------------------------------------------------------------------------
+
 void menu_t::configureMouse(olc::PixelGameEngine* engine, olc::hw::Mouse& mouse)
 {
-
+    static olc::vf2d lft_mouse_pressed_pos { 0.0f, 0.0f };
+    
     auto lft_btn_status {mouse.GetButton(0)};
     if (lft_btn_status.bPressed)
     {
-        m_mouse_pos_pressed = mouse.GetPosition();
+        lft_mouse_pressed_pos = mouse.GetPosition();
     }
-    if (lft_btn_status.bReleased)
-    { //-- Get the menu that lies at original button press
-        this->onClicked(engine, m_mouse_pos_pressed);
+    else if (lft_btn_status.bReleased)
+    {   //-- Get the menu that lies at original button press
+        onClicked(engine, lft_mouse_pressed_pos);
     }
 }
+//-----------------------------------------------------------------------------
 
 inline bool menu_t::isInside(olc::vf2d const& pos)
 {
-    auto right {m_pos.x + dimensions.x};
-    auto bottom {m_pos.y + dimensions.y};
+    auto right  { m_pos.x + dimensions.x };
+    auto bottom { m_pos.y + dimensions.y };
     return (m_pos.x <= pos.x) && (pos.x < right) && (m_pos.y <= pos.y) && (pos.y < bottom);
 }
-
 //-----------------------------------------------------------------------------

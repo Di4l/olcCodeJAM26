@@ -12,78 +12,58 @@
 
 namespace codejam26
 {
-//-------------------------------------------------------------------------
-static constexpr olc::vf2d INVALID_VF2D {};
-//-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
+    static constexpr olc::vf2d INVALID_VF2D {};
+    //-------------------------------------------------------------------------
 
-namespace menu
-{
-//---------------------------------------------------------------------
-
-namespace item
-{
-using action = std::function<bool(void)>;
-} // namespace item
-
-//---------------------------------------------------------------------
-
-struct item_t
-{
-    std::string text {};
-    item::action onClicked {};
-};
-
-//---------------------------------------------------------------------
-using item_s = std::shared_ptr<item_t>;
-using items = std::vector<item_s>;
-//---------------------------------------------------------------------
-} // namespace menu
-
-//-------------------------------------------------------------------------
-
-class menu_t : public olc::Image
-{
-public:
-
-    inline olc::vf2d& position()
+    namespace menu
     {
-        return m_pos;
-    }
+        //---------------------------------------------------------------------
 
-    inline menu::items& items()
+        namespace item
+        {
+        using action = std::function<bool(void)>;
+        } // namespace item
+
+        //---------------------------------------------------------------------
+
+        struct item_t
+        {
+            std::string text {};
+            item::action onClicked {};
+        };
+
+        //---------------------------------------------------------------------
+        using item_s = std::shared_ptr<item_t>;
+        using items = std::vector<item_s>;
+        //---------------------------------------------------------------------
+    } // namespace menu
+    //-------------------------------------------------------------------------
+
+    class menu_t : public olc::Image
     {
-        return m_items;
-    }
+    public:
+        inline olc::vf2d&   position() { return m_pos;   }
+        inline menu::items& items()    { return m_items; }
 
-    inline void moveTo(olc::vf2d const& pos)
-    {
-        m_pos = pos;
-    }
+        inline void moveTo(olc::vf2d const& pos) { m_pos = pos; }
 
-    bool onClicked(olc::PixelGameEngine* engine, olc::vf2d const& pos);
+        bool onClicked(olc::PixelGameEngine* engine, olc::vf2d const& pos);
+        void draw(olc::PixelGameEngine* engine, olc::vf2d const& pos = INVALID_VF2D);
+        void configureMouse(olc::PixelGameEngine* engine, olc::hw::Mouse& mouse);
 
-    void draw(olc::PixelGameEngine* engine, olc::vf2d const& pos = INVALID_VF2D);
+    protected:
+        menu::item_s clickedItem(olc::PixelGameEngine* engine, olc::vf2d const& relpos);
 
-    void configureMouse(olc::PixelGameEngine* engine, olc::hw::Mouse& mouse);
+    private:
+        olc::vf2d   m_pos {0, 0};
+        menu::items m_items {};
 
-protected:
-
-    menu::item_s clickedItem(olc::PixelGameEngine* engine, olc::vf2d const& relpos);
-
-private:
-
-    olc::vf2d m_pos {0, 0};
-    menu::items m_items {};
-
-    olc::vf2d m_mouse_pos_pressed;
-
-    inline bool isInside(olc::vf2d const& pos);
-};
-
-//-------------------------------------------------------------------------
-using menu_s = std::shared_ptr<menu_t>;
-//-------------------------------------------------------------------------
+        inline bool isInside(olc::vf2d const& pos);
+    };
+    //-------------------------------------------------------------------------
+    using menu_s = std::shared_ptr<menu_t>;
+    //-------------------------------------------------------------------------
 } // namespace codejam26
-
 //-----------------------------------------------------------------------------
 
