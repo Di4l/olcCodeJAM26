@@ -91,7 +91,7 @@ add_dependencies(pge3_static
 set(GAME_HEADERS
     src/logger.hpp
     src/menu.hpp
-    src/main_menu_options.hpp
+#    src/main_menu_options.hpp
     src/game.hpp
 )
 

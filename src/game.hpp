@@ -9,26 +9,71 @@
 #include <olcPGEX3_Miniaudio.h>
 
 #include "logger.hpp"
-#include "main_menu_options.hpp"
+//#include "main_menu_options.hpp"
 #include "menu.hpp"
 
 #include <map>
+#include <vector>
+#include <memory>
+#include <random>
+#include <exception>
+//-----------------------------------------------------------------------------
+#define CJGAME    codejam26::Game::instance()
 //-----------------------------------------------------------------------------
 
 namespace codejam26
 {
     //-------------------------------------------------------------------------
 
+    enum class GameState : uint8_t
+    {
+        GAME,
+        EXPLANATION,
+        MAIN_MENU,
+        EXIT
+    };
+    //-------------------------------------------------------------------------
+
     class Game : public olc::PixelGameEngine
     {
     public:
+        static Game& instance();
+
         bool OnUserCreate() override;
         bool OnUserUpdate(float /*fElapsedTime*/) override;
 
         void createRandomMenu();
         void playClickSound();
 
+        template <typename T, T min, T max>
+        T random()
+        {
+            if constexpr (std::is_integral_v<T>)
+                return std::uniform_int_distribution<T>{min, max}(m_rnd_engine);
+            else if constexpr (std::is_floating_point_v<T>)
+                return std::uniform_real_distribution<T>{min, max}(m_rnd_engine);
+            else
+                static_assert(std::is_arithmetic_v<T>,
+                    "random() requires an integral or floating-point type");
+        }
+
+        template <typename T>
+        T random(T min, T max)
+        {
+            if constexpr (std::is_integral_v<T>)
+                return std::uniform_int_distribution<T>{min, max}(m_rnd_engine);
+            else if constexpr (std::is_floating_point_v<T>)
+                return std::uniform_real_distribution<T>{min, max}(m_rnd_engine);
+            else
+                static_assert(std::is_arithmetic_v<T>,
+                    "random() requires an integral or floating-point type");
+        }
+
+        bool random() { return std::uniform_int_distribution<int>{0, 1}(m_rnd_engine); }
+
     private:
+        Game() = default;
+
         void initializeAudioEngine();
         void configureMap();
 
@@ -37,13 +82,18 @@ namespace codejam26
         bool correctButtonClicked();
         int  selectRandomIndex();
 
+        void createMainMenu();
+
         olc::ext::Miniaudio::AudioEngine m_audio       {};
         olc::ext::Miniaudio::Sound       m_sound_click {};
 
-        menu_s main_menu {nullptr};                              //-- Starting menu
-        menu_s m_menu    {nullptr};                              //-- To be removed
+        static std::mt19937 m_rnd_engine;
 
-        std::map<std::string, std::string>  m_map {};            //-- Map to store the items and their corresponding hints
+        menu_s          m_main_menu {nullptr};                   //-- Starting menu
+        menu_s          m_menu      {nullptr};                   //-- To be removed
+        menu_s          m_hints     {nullptr};                   //-- The hints will be drawn here
+        menu::manager_t m_menu_mgr  {};                          //-- Menu manager
+
         std::vector<std::string>            m_buttons_text {};   //-- Vector to store the items that will be shown in the menu as
                                                                  //   the text of the buttons to click in the game.
         std::vector<int>                    m_unused_indices {}; //-- Vector to store the indices of the items that have been used
@@ -55,8 +105,8 @@ namespace codejam26
                                                                  //   the user has to click on in the game. This is used to know
                                                                  //   which item the user has to click on in the game and to show
                                                                  //   the hint for that item.
-        MainMenuOptions m_current_state {MainMenuOptions::MAIN_MENU};
+        GameState m_game_state {GameState::MAIN_MENU};
     };
     //-------------------------------------------------------------------------
-} // namespace codejam26
+}
 //-----------------------------------------------------------------------------
