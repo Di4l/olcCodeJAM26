@@ -3,7 +3,6 @@
 //-----------------------------------------------------------------------------
 #include <olcPixelGameEngine3.h>
 
-#include <cassert>
 #include <functional>
 #include <vector>
 #include <memory>
@@ -21,13 +20,17 @@ namespace codejam26
     namespace menu
     {
         //---------------------------------------------------------------------
-        namespace item { using action = std::function<bool(void)>; }
+
+        namespace item
+        {
+            using action = std::function<bool(void)>;
+        }
         //---------------------------------------------------------------------
 
         struct item_t
         {
-            std::string  text{};        //-- Text to draw
-            item::action onClicked{};   //-- Callback called when clicked
+            std::string  text{};
+            item::action onClicked{};
         };
         //---------------------------------------------------------------------
         using item_s = std::shared_ptr<item_t>;
@@ -39,23 +42,28 @@ namespace codejam26
     class menu_t : public olc::Image
     {
     public:
-        inline olc::vf2d&   position() { return m_pos;   }
-        inline menu::items& items()    { return m_items; }
+        inline olc::vf2d& position() { return m_pos; }
+        inline menu::items& items() { return m_items; }
 
-        inline void moveTo(olc::vf2d const& pos) { m_pos = pos; }
+        inline void moveTo(olc::vf2d const& pos)
+        {
+            m_pos = pos;
+        }
 
         bool onClicked(olc::PixelGameEngine* engine, olc::vf2d const& pos);
+
         void draw(olc::PixelGameEngine* engine, olc::vf2d const& pos = INVALID_VF2D);
 
     protected:
-    private:
-        olc::vf2d    m_pos{0,0};
-        menu::items  m_items{};
-
         menu::item_s clickedItem(olc::PixelGameEngine* engine, olc::vf2d const& relpos);
+
+    private:
+        olc::vf2d   m_pos{0, 0};
+        menu::items m_items{};
 
         inline bool isInside(olc::vf2d const& pos);
     };
+
     //-------------------------------------------------------------------------
     using menu_s = std::shared_ptr<menu_t>;
     //-------------------------------------------------------------------------

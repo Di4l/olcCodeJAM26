@@ -106,6 +106,10 @@ add_executable(${PROJECT_NAME}
     ${GAME_SOURCES}
 )
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG>
+)
+
 target_include_directories(${PROJECT_NAME} PRIVATE
     src
     ${olcpixelgameengine3_SOURCE_DIR}

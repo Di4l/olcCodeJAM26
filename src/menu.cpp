@@ -40,11 +40,10 @@ menu::item_s menu_t::clickedItem(olc::PixelGameEngine* engine, olc::vf2d const& 
         //   the current item is the one being clicked!!
         if((msz + isz).y > relpos.y)
         {
-            MN_LOGGER.debug("Clicked on element '%s'", itm->text);
+            MN_LOGGER.debug("Clicked on element '{}'", itm->text);
             return itm;
         }
-        msz   += isz;
-        msz.y += MENU_ITEM_GAP;
+        msz.y += (isz.y + MENU_ITEM_GAP);
     }
     MN_LOGGER.debug("Could not find the menu element clicked upon");
     return nullptr;
@@ -80,7 +79,7 @@ void menu_t::draw(olc::PixelGameEngine* engine, olc::vf2d const& pos)
 
     //-- Draw a rectangle around the "menu"
     auto msz = ge_draw.GetTargetSize();
-    ge_draw.RoundedRect({1,1}, {msz.x - 1, msz.y - 1}, 2.0f, olc::Colour::VERY_DARK_GREY);
+    ge_draw.RoundedRect({1.0f, 1.0f}, {msz.x - 1.0f, msz.y - 1.0f}, 2.0f, olc::Colour::VERY_DARK_GREY);
 
     //-- Draw elements
     olc::vf2d ipos { MENU_MARGIN };
