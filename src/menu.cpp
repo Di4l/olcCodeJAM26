@@ -21,14 +21,21 @@ bool menu_t::onClicked(olc::vf2d const& pos)
         //-- Get the item clicked (if any)
         auto clicked_itm  { clickedItem(relative_pos) };
         //-- Call callback (if item clicked)
-        return clicked_itm && clicked_itm->onClicked ? clicked_itm->onClicked() : false;
+        if(clicked_itm && clicked_itm->onClicked)
+        {
+            CJGAME.playClickSound();
+            clicked_itm->onClicked();
+        }
     }
     return false;
 }
 //-----------------------------------------------------------------------------
 
-inline bool menu_t::isHit(olc::vf2d const& pos)
+bool menu_t::isHit(olc::vf2d const& pos)
 {
+    if(!m_visible)
+        return false;
+
     auto right  { m_pos.x + dimensions.x };
     auto bottom { m_pos.y + dimensions.y };
     return (m_pos.x <= pos.x) && (pos.x < right) && (m_pos.y <= pos.y) && (pos.y < bottom);
@@ -37,7 +44,10 @@ inline bool menu_t::isHit(olc::vf2d const& pos)
 
 void menu_t::draw(olc::vf2d const& pos)
 {
-    auto& ge_draw { GAME.GetDraw() };
+    if(!m_visible)
+        return;
+
+    auto& ge_draw { CJGAME.GetDraw() };
 
     //-- If position has been informed, update it
     if (&pos != &INVALID_VF2D)
@@ -74,7 +84,7 @@ void menu_t::draw(olc::vf2d const& pos)
     //-- End drawing menu
 
     //-- Draw the actual menu on the window
-    ge_draw.SetTarget(GAME.GetScreen());
+    ge_draw.SetTarget(CJGAME.GetScreen());
     ge_draw.Image(*this, m_pos);
 }
 //-----------------------------------------------------------------------------
@@ -87,7 +97,7 @@ menu::item_s menu_t::clickedItem(olc::vf2d const& relpos)
     olc::vf2d msz { MENU_MARGIN };
     for(auto& itm : m_items)
     {
-        auto isz { GAME.GetDraw().GetTextSize(itm->text, true) };
+        auto isz { CJGAME.GetDraw().GetTextSize(itm->text, true) };
         //-- If adding the next element goes below the click on the mouse,
         //   the current item is the one being clicked!!
         if((msz + isz).y > relpos.y)
@@ -115,7 +125,7 @@ menu_s menu::manager_t::spawnMenu()
 {
     auto mn { m_menus.emplace_back(new menu_t) };
     MN_LOGGER.debug(" - menu address 0x{:x}", reinterpret_cast<std::uintptr_t>(mn.get()));
-    GAME.CreateImage(*mn, {10, 10});
+    CJGAME.CreateImage(*mn, {10, 10});
     MN_LOGGER.debug(" - menu image created");
     return mn;
 }
@@ -131,6 +141,26 @@ menu_s menu::manager_t::menuAt(olc::vf2d const& pos)
             return _menu ? _menu->isHit(pos) : false;
         });
     return it != m_menus.rend() ? *it : nullptr;
+}
+//-----------------------------------------------------------------------------
+
+void menu::manager_t::bringToFront(menu_s mn)
+{
+    auto fnd { std::find(m_menus.begin(), m_menus.end(), mn) };
+    if(fnd != m_menus.end())
+        std::rotate(fnd, std::next(fnd), m_menus.end());
+}
+//-----------------------------------------------------------------------------
+
+void menu::manager_t::onClick(olc::vf2d const& pos)
+{
+    auto mn { menuAt(pos) };
+    if(mn)
+    {   //-- This menu needs to be placed at the bottom of the stack so it
+        //   is the last to be drawn, effectively, becoming the topmost window
+        bringToFront(mn);
+        mn->onClicked(pos);
+    }
 }
 //-----------------------------------------------------------------------------
 

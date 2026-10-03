@@ -1,6 +1,5 @@
 //-----------------------------------------------------------------------------
 #include "game.hpp"
-#include "main_menu_options.hpp"
 
 #include <map>
 #include <string_view>
@@ -116,61 +115,13 @@ bool Game::OnUserCreate()
     m_hints = std::make_shared<menu_t>();
     m_hints->items().push_back(std::make_shared<menu::item_t>(SV_HINT.data(), nullptr));
 
-    main_menu = std::make_shared<menu_t>();
-    main_menu->items().emplace_back(
-        std::make_shared<menu::item_t>(
-            "Start Game!",
-            [this]()
-            {
-                LOGGER.info("Init presses");
-                m_current_state = MainMenuOptions::GAME;
-
-                return true;
-            }
-        )
-    );
-
-    main_menu->items().emplace_back(
-        std::make_shared<menu::item_t>(
-            "Instructions",
-            [this]()
-            {
-                LOGGER.info("EXPLANATION");
-                m_current_state = MainMenuOptions::EXPLANATION;
-                return true;
-            }
-        )
-    );
-
-    main_menu->items().emplace_back(
-        std::make_shared<menu::item_t>(
-            "Exit",
-            [this]()
-            {
-                LOGGER.info("EXIT");
-                m_current_state = MainMenuOptions::EXIT;
-                return true;
-            }
-        )
-    );
-
-    LOGGER.debug("Try creating a menu within the manager...");
-    auto mn { m_menu_mgr.spawnMenu() };
-    LOGGER.debug(" - Menu created with address 0x{:x}", reinterpret_cast<std::uintptr_t>(mn.get()));
-    if(mn)
-    {
-        LOGGER.debug(" - Place menu at 500, 50");
-        mn->moveTo({500.0f, 50.0f});
-        LOGGER.debug(" - Create menu item...");
-        mn->items().push_back(std::make_shared<menu::item_t>("Probando", nullptr));
-        LOGGER.debug(" - ...done!");
-    }
+    LOGGER.info("Create main menu");
+    createMainMenu();
 
     LOGGER.info("Create starting menu");
+    m_menu = m_menu_mgr.spawnMenu();
     createRandomMenu();
 
-    CreateImage(*m_menu,  {10, 10});
-    CreateImage(*main_menu, {10, 10});
     CreateImage(*m_hints, {0, 350});
 
     LOGGER.info("Game instance created and initialized");
@@ -199,10 +150,14 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
     auto hsz { draw.GetTextSize(m_hints->items()[0]->text, true) };
     m_hints->draw({ (wsz.x - hsz.x) / 2.0f, (wsz.y - hsz.y) - 10.0f });
 
-    //-- If we wanted to draw the manu at a different coordinates, we could
+    //-- If we wanted to draw the menu at a different coordinates, we could
     //   pass a second parameter to draw() with the desired position
-    m_menu->draw({20, 10});
+    // m_menu->draw({20, 10});
 
+    m_menu->visible() = (m_game_state == GameState::GAME);
+    m_main_menu->visible() = !m_menu->visible();
+
+    //-- Draw all the other menus
     m_menu_mgr.draw();
 
     //-- Get the mouse position
@@ -231,6 +186,8 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
     { //-- Get the menu that lies at original button press
         if(menu_moving)
         {
+            m_menu_mgr.bringToFront(menu_pressed);
+
             menu_moving     = false;
             menu_pressed    = nullptr;
             menu_offset_pos = {0.0f,0.0f};
@@ -239,36 +196,37 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
         else
         {
             m_menu->onClicked(mouse_pos_pressed);
+            m_menu_mgr.onClick(mouse_pos_pressed);
         }
     }
-    
-    auto halfScreen = (draw.GetTargetSize() - main_menu->Size()) / 2;
-    if (m_current_state == MainMenuOptions::MAIN_MENU)
-    {
-        main_menu->draw(this, halfScreen);
-        main_menu->configureMouse(this, mouse);
-    }
-    else if (m_current_state == MainMenuOptions::EXPLANATION)
-    {
-        std::string explicationText = "Valid text";
-        main_menu->draw(this, halfScreen);
-        main_menu->configureMouse(this, mouse);
 
-        auto explicationPosition = halfScreen;
-        explicationPosition.x = explicationPosition.x + main_menu->Size().x + 40;
-        draw.StringProp(explicationPosition, explicationText);
-    }
-    else if (m_current_state == MainMenuOptions::GAME)
-    {
-        //-- If we wanted to draw the manu at a different coordinates, we could
-        //   pass a second parameter to draw() with the desired position
-        m_menu->draw(this, {20, 10});
-        m_menu->configureMouse(this, mouse);
-    }
-    else if (m_current_state == MainMenuOptions::EXIT)
-    {
-        running = false;
-    }
+    auto halfScreen = (draw.GetTargetSize() - m_main_menu->Size()) / 2;
+    // if (m_game_state == GameState::MAIN_MENU)
+    // {
+    //     main_menu->draw(halfScreen);
+    //     main_menu->configureMouse(this, mouse);
+    // }
+    // else if (m_game_state == GameState::EXPLANATION)
+    // {
+    //     std::string explicationText = "Valid text";
+    //     main_menu->draw(halfScreen);
+    //     main_menu->configureMouse(this, mouse);
+
+    //     auto explicationPosition = halfScreen;
+    //     explicationPosition.x = explicationPosition.x + main_menu->Size().x + 40;
+    //     draw.StringProp(explicationPosition, explicationText);
+    // }
+    // else if (m_game_state == GameState::GAME)
+    // {
+    //     //-- If we wanted to draw the manu at a different coordinates, we could
+    //     //   pass a second parameter to draw() with the desired position
+    //     m_menu->draw({20, 10});
+    //     m_menu->configureMouse(this, mouse);
+    // }
+    // else if (m_game_state == GameState::EXIT)
+    // {
+    //     running = false;
+    // }
 
     return running;
 }
@@ -287,41 +245,37 @@ void Game::configureMap()
         m_unused_indices.push_back(index++); // Store the index of the item that has been stored as a random button to click in the game. This will be used to avoid showing the same item again in the menu. 
     }
 }
-
 //-----------------------------------------------------------------------------
 
 void Game::createRandomMenu()
 {
     m_menu.reset(new menu_t());
+    CreateImage(*m_menu, {10,10});
 
     //-- Declare as size_t to avoid warning on the for loop below when comparing variables...
     auto randomNumberOfItems = random<size_t, 1, 7>(); // Generate a random number between 1 and 7 this will be the elements shown in the menu
 
-    int selectedIndex = selectRandomIndex();
+    auto selectedIndex = selectRandomIndex();
+    const std::string& buttonText = m_buttons_text.at(m_unused_indices.at(selectedIndex)); 
 
     auto const hint = MITM_MAP.at(buttonText);
 
-    auto hint = m_map.at(buttonText);
-
+    //-- Store the item and its corresponding hint that the user has to click on in the game. This is used to
+    //   know which item the user has to click on in the game and to show the hint for that item.
     m_current_pair = std::make_pair(
         buttonText,
         hint
-    ); // Store the item and its corresponding hint that the user has to click on in the game. This is used to
-       // know which item the user has to click on in the game and to show the hint for that item.
+    );
 
-    eraseUsedIndices(
-        selectedIndex
-    ); // Remove the index of the item that has been stored as the correct button to click in the game. This
-       // will be used to avoid showing the same item again in the menu.
+    //-- Remove the index of the item that has been stored as the correct button to click in the game. This
+    //   will be used to avoid showing the same item again in the menu.
+    eraseUsedIndices(selectedIndex);
 
-    m_menu->items().emplace_back(
+    m_menu->items().push_back(
         std::make_shared<menu::item_t>(buttonText, std::bind_front(&Game::correctButtonClicked, this))
     ); // Add the correct item to the menu with its corresponding callback
     LOGGER.debug("Correct button: '{}'", m_current_pair.first);
-    LOGGER.debug(
-        " - Hint: '{}'",
-        m_current_pair.second
-    ); // Show the hint for the item that the user has to click on in the game.
+    LOGGER.debug(" - Hint: '{}'", m_current_pair.second ); // Show the hint for the item that the user has to click on in the game.
 
     m_hints->items()[0]->text = std::string(SV_HINT.data()) + hint.data();
 
@@ -361,10 +315,7 @@ void Game::createRandomMenu()
             );
         }
     }
-
-    CreateImage(*m_menu, {10, 10});
 }
-
 //-----------------------------------------------------------------------------
 
 void Game::eraseUsedIndices(int index)
@@ -374,7 +325,6 @@ void Game::eraseUsedIndices(int index)
     ); // Store the index of the item that has been stored as the correct button to click in the game. This
        // will be used to avoid showing the same item again in the menu.
 }
-
 //-----------------------------------------------------------------------------
 
 bool Game::incorrectButtonClicked()
@@ -387,7 +337,6 @@ bool Game::incorrectButtonClicked()
     playClickSound();
     return true;
 }
-
 //-----------------------------------------------------------------------------
 
 bool Game::correctButtonClicked()
@@ -401,7 +350,6 @@ bool Game::correctButtonClicked()
     LOGGER.info("Hint: {}", m_current_pair.second);
     return true;
 }
-
 //-----------------------------------------------------------------------------
 
 int Game::selectRandomIndex()
@@ -417,7 +365,44 @@ int Game::selectRandomIndex()
 
     return selectedIndex;
 }
+//-----------------------------------------------------------------------------
 
+void Game::createMainMenu()
+{
+    m_main_menu = m_menu_mgr.spawnMenu();
+
+    m_main_menu->items().push_back(std::make_shared<menu::item_t>("Start Game!",
+            [&]()
+            {
+                LOGGER.info("Init presses");
+                m_game_state = GameState::GAME;
+                return true;
+            }
+        )
+    );
+
+    m_main_menu->items().push_back(std::make_shared<menu::item_t>("Instructions",
+            [&]()
+            {
+                LOGGER.info("EXPLANATION");
+                m_game_state = GameState::EXPLANATION;
+                return true;
+            }
+        )
+    );
+
+    m_main_menu->items().push_back(std::make_shared<menu::item_t>("Exit",
+            [&]()
+            {
+                LOGGER.info("EXIT");
+                m_game_state = GameState::EXIT;
+                return true;
+            }
+        )
+    );
+
+    m_main_menu->moveTo((draw.GetTargetSize() - m_main_menu->Size()) / 2);
+}
 //-----------------------------------------------------------------------------
 
 void Game::playClickSound()
@@ -431,7 +416,6 @@ void Game::playClickSound()
         LOGGER.error("Click sound not loaded. Cannot play it!");
     }
 }
-
 //-----------------------------------------------------------------------------
 
 void Game::initializeAudioEngine()
@@ -449,5 +433,4 @@ void Game::initializeAudioEngine()
         LOGGER.error("Could not load audio 'keyboard001' from memory");
     }
 }
-
 //-----------------------------------------------------------------------------

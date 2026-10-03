@@ -45,24 +45,24 @@ namespace codejam26
     class menu_t : public olc::Image
     {
     public:
-        [[nodiscard]] inline olc::vf2d&   position() { return m_pos;   }
-        [[nodiscard]] inline menu::items& items()    { return m_items; }
+        [[nodiscard]] inline olc::vf2d&   position() { return m_pos;     }
+        [[nodiscard]] inline bool&        visible()  { return m_visible; }
+        [[nodiscard]] inline menu::items& items()    { return m_items;   }
 
         inline void moveTo(olc::vf2d const& pos) { m_pos = pos; }
 
         [[maybe_unused]] bool onClicked(olc::vf2d const& pos);
         [[nodiscard]]    bool isHit(olc::vf2d const& pos);
         
-        void configureMouse(olc::PixelGameEngine* engine, olc::hw::Mouse& mouse);
-
         void draw(olc::vf2d const& pos = INVALID_VF2D);
 
     protected:
         [[nodiscard]] menu::item_s clickedItem(olc::vf2d const& relpos);
 
     private:
-        olc::vf2d   m_pos   {0,0};
-        menu::items m_items {};
+        olc::vf2d   m_pos     {0,0};
+        bool        m_visible {true};
+        menu::items m_items   {};
     };
     //-------------------------------------------------------------------------
     using menu_s  = std::shared_ptr<menu_t>;
@@ -82,6 +82,9 @@ namespace codejam26
             [[nodiscard]] menu_s spawnMenu();
             [[nodiscard]] menu_s menuAt(olc::vf2d const& pos);
 
+            void bringToFront(menu_s mn);
+
+            void onClick(olc::vf2d const& pos);
             void draw();
 
         protected:
