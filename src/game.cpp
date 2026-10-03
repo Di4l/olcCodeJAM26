@@ -159,6 +159,8 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
 
     //-- Draw all the other menus
     m_menu_mgr.draw();
+    if(m_main_menu->visible())
+        m_main_menu->moveTo((draw.GetTargetSize() - m_main_menu->Size()) / 2.0f);
 
     //-- Get the mouse position
     auto lft_btn_status {mouse.GetButton(0)};
@@ -400,8 +402,6 @@ void Game::createMainMenu()
             }
         )
     );
-
-    m_main_menu->moveTo((draw.GetTargetSize() - m_main_menu->Size()) / 2);
 }
 //-----------------------------------------------------------------------------
 
