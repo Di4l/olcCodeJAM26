@@ -1,71 +1,89 @@
 //-----------------------------------------------------------------------------
 #pragma once
 //-----------------------------------------------------------------------------
-#include <olcPixelGameEngine3.h>
-
-#include <functional>
-#include <vector>
-#include <memory>
 #include "logger.hpp"
+#include <functional>
+#include <memory>
+#include <olcPixelGameEngine3.h>
+#include <vector>
 //-----------------------------------------------------------------------------
-#define MN_LOGGER       codejam26::Logger::get("menu")
+#define MN_LOGGER codejam26::Logger::get("menu")
 //-----------------------------------------------------------------------------
 
 namespace codejam26
 {
-    //-------------------------------------------------------------------------
-    static constexpr olc::vf2d INVALID_VF2D {};
-    //-------------------------------------------------------------------------
+//-------------------------------------------------------------------------
+static constexpr olc::vf2d INVALID_VF2D {};
+//-------------------------------------------------------------------------
 
-    namespace menu
+namespace menu
+{
+//---------------------------------------------------------------------
+
+namespace item
+{
+using action = std::function<bool(void)>;
+} // namespace item
+
+//---------------------------------------------------------------------
+
+struct item_t
+{
+    std::string text {};
+    item::action onClicked {};
+};
+
+//---------------------------------------------------------------------
+using item_s = std::shared_ptr<item_t>;
+using items = std::vector<item_s>;
+//---------------------------------------------------------------------
+} // namespace menu
+
+//-------------------------------------------------------------------------
+
+class menu_t : public olc::Image
+{
+public:
+
+    inline olc::vf2d& position()
     {
-        //---------------------------------------------------------------------
-
-        namespace item
-        {
-            using action = std::function<bool(void)>;
-        }
-        //---------------------------------------------------------------------
-
-        struct item_t
-        {
-            std::string  text{};
-            item::action onClicked{};
-        };
-        //---------------------------------------------------------------------
-        using item_s = std::shared_ptr<item_t>;
-        using items  = std::vector<item_s>;
-        //---------------------------------------------------------------------
+        return m_pos;
     }
-    //-------------------------------------------------------------------------
 
-    class menu_t : public olc::Image
+    inline menu::items& items()
     {
-    public:
-        inline olc::vf2d& position() { return m_pos; }
-        inline menu::items& items() { return m_items; }
+        return m_items;
+    }
 
-        inline void moveTo(olc::vf2d const& pos)
-        {
-            m_pos = pos;
-        }
+    inline void moveTo(olc::vf2d const& pos)
+    {
+        m_pos = pos;
+    }
 
-        bool onClicked(olc::PixelGameEngine* engine, olc::vf2d const& pos);
+    bool onClicked(olc::PixelGameEngine* engine, olc::vf2d const& pos);
 
-        void draw(olc::PixelGameEngine* engine, olc::vf2d const& pos = INVALID_VF2D);
+    void draw(olc::PixelGameEngine* engine, olc::vf2d const& pos = INVALID_VF2D);
 
-    protected:
-        menu::item_s clickedItem(olc::PixelGameEngine* engine, olc::vf2d const& relpos);
+    void configureMouse(olc::PixelGameEngine* engine, olc::hw::Mouse& mouse);
 
-    private:
-        olc::vf2d   m_pos{0, 0};
-        menu::items m_items{};
+protected:
 
-        inline bool isInside(olc::vf2d const& pos);
-    };
+    menu::item_s clickedItem(olc::PixelGameEngine* engine, olc::vf2d const& relpos);
 
-    //-------------------------------------------------------------------------
-    using menu_s = std::shared_ptr<menu_t>;
-    //-------------------------------------------------------------------------
-}
+private:
+
+    olc::vf2d m_pos {0, 0};
+    menu::items m_items {};
+
+    olc::vf2d m_mouse_pos_pressed;
+
+    inline bool isInside(olc::vf2d const& pos);
+};
+
+//-------------------------------------------------------------------------
+using menu_s = std::shared_ptr<menu_t>;
+//-------------------------------------------------------------------------
+} // namespace codejam26
+
 //-----------------------------------------------------------------------------
+
