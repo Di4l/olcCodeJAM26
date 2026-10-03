@@ -13,6 +13,10 @@
 #include "menu.hpp"
 
 #include <map>
+#include <vector>
+#include <memory>
+//-----------------------------------------------------------------------------
+#define GAME    codejam26::Game::instance()
 //-----------------------------------------------------------------------------
 
 namespace codejam26
@@ -22,6 +26,8 @@ namespace codejam26
     class Game : public olc::PixelGameEngine
     {
     public:
+        static Game& instance();
+
         bool OnUserCreate() override;
         bool OnUserUpdate(float /*fElapsedTime*/) override;
 
@@ -40,8 +46,10 @@ namespace codejam26
         olc::ext::Miniaudio::AudioEngine m_audio       {};
         olc::ext::Miniaudio::Sound       m_sound_click {};
 
-        menu_s main_menu {nullptr};                              //-- Starting menu
-        menu_s m_menu    {nullptr};                              //-- To be removed
+        menu_s          main_menu  {nullptr};                    //-- Starting menu
+        menu_s          m_menu     {nullptr};                    //-- To be removed
+        menu_s          m_hints    {nullptr};                    //-- The hints will be drawn here
+        menu::manager_t m_menu_mgr {};                           //-- Menu manager
 
         std::map<std::string, std::string>  m_map {};            //-- Map to store the items and their corresponding hints
         std::vector<std::string>            m_buttons_text {};   //-- Vector to store the items that will be shown in the menu as

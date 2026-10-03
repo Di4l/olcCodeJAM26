@@ -2,12 +2,94 @@
 #include "game.hpp"
 #include "main_menu_options.hpp"
 
-#include <iostream>
+#include <map>
+#include <string_view>
 //-- Include asset file headers
 // #include <retro_blop_18.hpp>
 #include <keyboard001.hpp>
 //-----------------------------------------------------------------------------
 using namespace codejam26;
+//-----------------------------------------------------------------------------
+static constexpr olc::Pixel CLR_BACKGROUND(80,180,180);
+static constexpr std::string_view SV_HINT {"Hint: "};
+static constexpr std::string_view SV_INTRO
+{
+    "  Where to start... how did I get into this mess? I was just...\n" \
+    "trying to unsubscribe from that p-hub service that is driving me\n" \
+    "nuts. 'Log in, then account, click in here, then over there...'\n" \
+    "hold on... who is that on what video?? Oh f*** it!! Forget about\n" \
+    "it!! Let's do what we came here to do... ... ... naaah, just this\n" \
+    "one little click... it'll be 5 minutes.\n\n\n\n" \
+    "  Why did I bloody clicked? How can I be soooo dumb? You moron...\n" \
+    "Look at the mess you've gotten into. Now what...\n\n\n" \
+    "       How do I get out of this application?\n"
+};
+//-----------------------------------------------------------------------------
+
+static const std::map<std::string_view, std::string_view> MITM_MAP
+{
+    {"File", "Every journey begins with a couple of words."},
+    {"Open", "Some things are meant to be opened, others not..."},
+    {"Close Menu", "Sometimes the way forward is to leave."},
+    {"New Menu", "A fresh start can change everything. Hopefully."},
+    {"Delete", "What is gone cannot bother you anymore, not always but sometimes."},
+    {"Copy", "Why make another when you can duplicate it? Don't forget to correct it."},
+    {"Paste", "I think it is in my clipboard, but I am not sure. It is worth a try."},
+    {"Cut", "The best way to get something in small pieces."},
+    {"Help", "Should I have to read the manual? I think it is worth a try."},
+    {"Sound", "It would be awesome to have this control on my baby's crying."},
+    {"Settings", "Everything has a way to be adjusted. Probably."},
+    {"Save", "Some things are worth keeping. Others are better forgotten."},
+    {"Save As", "Perhaps it deserves a different name. Perhaps you do."},
+    {"Share", "Good things are rarely kept alone. Bad things neither."},
+    {"Preferences", "Everyone has their own way of doing things. Mine is probably wrong."},
+    {"Close Window", "There is always another way out. Unless there isn't."},
+    {"Undo", "Mistakes don't always have to be permanent. Convenient, isn't it?"},
+    {"Search", "The answer may already be somewhere. The question is where."},
+    {"Select All", "Why choose only one? That sounds like unnecessary work."},
+    {"New Game", "Every adventure needs a first step. This might be one."},
+    {"Continue Game", "The story isn't over yet. Apparently."},
+    {"Options", "There is more than one way forward. Most of them are probably wrong."},
+    {"Graphics", "Sometimes seeing is believing. Sometimes it is just bad graphics."},
+    {"Credits", "Someone had to make all this. Sorry."},
+    {"Cancel", "Not every decision needs to be final. Especially this one."},
+    {"Quit Game(On development)", "Every game eventually comes to an end. This one can end sooner."},
+    {"Video", "Some things are easier to understand when you see them. Some aren't."},
+    {"Language", "Words mean different things to different people. Especially mine."},
+    {"Start", "Everything has to begin somewhere. This seems as good a place as any."},
+    {"Stop", "Knowing when to stop is important. I should probably follow my own advice."},
+    {"<Invalid>", "Even mistakes can point you somewhere. Usually somewhere useless."},
+    {"------", "Sometimes the least obvious path is worth following. Sometimes it is just a line."},
+    {"Do not click!", "They wouldn't warn you without a reason."},
+    {"Click Me!", "At least this one is honest."},
+    {"*******", "Some secrets are better left unexplained. Like this one."},
+    {"Reset password", "Sometimes forgetting is the first step. Remembering the password would be better."},
+    {"Create Account", "Every identity has to start somewhere. This is probably legal."},
+    {"Log  in", "Someone is expecting you. Hopefully it is you."},
+    {"Log out", "Even visitors have to leave eventually. Probably."},
+    {"Security", "Not everything should be trusted. Especially menus."},
+    {"This is not a valid option", "Perhaps the wrong choice is hiding the right one."},
+    {"This is neither a valid option", "Two wrong answers still leave one possibility. I think."},
+    {"Stop? ", "You may want to reconsider before going further. Or don't."},
+    {"Reload", "Sometimes a second look changes everything. Sometimes it just reloads."},
+    {"Quit Game", "Every game eventually comes to an end. Congratulations on making it this far! You have completed the game and reached the end. Thank you for playing!)"}
+};
+//-----------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+Game& Game::instance()
+{
+    static std::unique_ptr<Game> m_singleton { new Game };
+    return *m_singleton;
+}
 //-----------------------------------------------------------------------------
 
 bool Game::OnUserCreate()
@@ -21,15 +103,9 @@ bool Game::OnUserCreate()
     LOGGER.info("Initialize menus");
     configureMap();
 
-    // LOGGER.info("Create a sample menu");
-    // m_menu = std::make_shared<menu_t>();
-
-    // m_menu->items().emplace_back(std::make_shared<menu::item_t>("File", [&](){ playClickSound(); std::cout
-    // << "Pressed 'File'\n"; return true; }));
-    // m_menu->items().emplace_back(std::make_shared<menu::item_t>("Open (Ctrl+O)", [&](){ playClickSound();
-    // std::cout << "Pressed 'Open'\n"; return true; }));
-    // m_menu->items().emplace_back(std::make_shared<menu::item_t>("Exit", [&](){ playClickSound(); std::cout
-    // << "Pressed 'Exit'\n"; return true; }));
+    LOGGER.info("Create hints rectangle");
+    m_hints = std::make_shared<menu_t>();
+    m_hints->items().push_back(std::make_shared<menu::item_t>(SV_HINT.data(), nullptr));
 
     main_menu = std::make_shared<menu_t>();
     main_menu->items().emplace_back(
@@ -69,14 +145,17 @@ bool Game::OnUserCreate()
         )
     );
 
-    auto window_position = GetWindowPosition();
-    window_position.y = window_position.y / 2;
-    window_position.x = window_position.x / 2;
+    // auto window_position = GetWindowPosition();
+    // window_position.y = window_position.y / 2;
+    // window_position.x = window_position.x / 2;
 
-    CreateImage(*main_menu, window_position);
 
+    LOGGER.info("Create starting menu");
     createRandomMenu();
-    CreateImage(*m_menu, {10, 10});
+
+    CreateImage(*m_menu,  {10, 10});
+    CreateImage(*main_menu, {10, 10});
+    CreateImage(*m_hints, {0, 350});
 
     LOGGER.info("Game instance created and initialized");
     return true;
@@ -87,10 +166,36 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
 {
     bool running = true;
     //-- Store where the mouse was first pressed
+    static olc::vf2d mouse_pos_pressed {};
 
-    //-- Clear the screen (grey => "dark white")
-    draw.Clear(olc::Colour::GREY);
+    //-- Clear the screen and fill it in the background color
+    draw.Clear(CLR_BACKGROUND);
 
+    //-- Draw text centered on window
+    auto tsz { draw.GetTextSize(SV_INTRO.data(), true) };  //-- Text size
+    auto wsz { draw.GetTargetSize() };                  //-- Window size
+    draw.StringProp((wsz - tsz) / 2, SV_INTRO.data());
+
+    //-- draw the Hints first, so if anything is overlapped, the Hints are at the bottom
+    auto hsz { draw.GetTextSize(m_hints->items()[0]->text, true) };
+    m_hints->draw({ (wsz.x - hsz.x) / 2.0f, (wsz.y - hsz.y) - 10.0f });
+
+    //-- If we wanted to draw the manu at a different coordinates, we could
+    //   pass a second parameter to draw() with the desired position
+    m_menu->draw({20, 10});
+
+    //-- Get the mouse position
+    auto lft_btn_status {mouse.GetButton(0)};
+    if(lft_btn_status.bPressed)
+    {
+        
+    }
+    else if(lft_btn_status.bReleased)
+    { //-- Get the menu that lies at original button press
+        m_menu->onClicked(mouse_pos_pressed);
+    }
+
+    
     auto halfScreen = (draw.GetTargetSize() - main_menu->Size()) / 2;
     if (m_current_state == MainMenuOptions::MAIN_MENU)
     {
@@ -125,85 +230,16 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
 
 void Game::configureMap()
 {
-    // Configure the map with menu items and their corresponding messages to show as hints
-    m_map.clear(); //-- Unnecesary, since this method is called at contruction and the map is empty then.
-    //-- I'd rather use: m_map["File"] = "Every journey begins with a couple of words.";
-    m_map.insert({"File", "Every journey begins with a couple of words."});
-    m_map.insert({"Open", "Some things are meant to be opened, others not..."});
-    m_map.insert({"Close Menu", "Sometimes the way forward is to leave."});
-    m_map.insert({"New Menu", "A fresh start can change everything. Hopefully."});
-    m_map.insert({"Delete", "What is gone cannot bother you anymore, not always but sometimes."});
-    m_map.insert({"Copy", "Why make another when you can duplicate it? Don't forget to correct it."});
-    m_map.insert({"Paste", "I think it is in my clipboard, but I am not sure. It is worth a try."});
-    m_map.insert({"Cut", "The best way to get something in small pieces."});
-    m_map.insert({"Help", "Should I have to read the manual? I think it is worth a try."});
-    m_map.insert({"Sound", "It would be awesome to have this control on my baby's crying."});
-    m_map.insert({"Settings", "Everything has a way to be adjusted. Probably."});
-    m_map.insert({"Save", "Some things are worth keeping. Others are better forgotten."});
-    m_map.insert({"Save As", "Perhaps it deserves a different name. Perhaps you do."});
-    m_map.insert({"Share", "Good things are rarely kept alone. Bad things neither."});
-    m_map.insert({"Preferences", "Everyone has their own way of doing things. Mine is probably wrong."});
-    m_map.insert({"Close Window", "There is always another way out. Unless there isn't."});
-    m_map.insert({"Undo", "Mistakes don't always have to be permanent. Convenient, isn't it?"});
-    m_map.insert({"Search", "The answer may already be somewhere. The question is where."});
-    m_map.insert({"Select All", "Why choose only one? That sounds like unnecessary work."});
-    m_map.insert({"New Game", "Every adventure needs a first step. This might be one."});
-    m_map.insert({"Continue Game", "The story isn't over yet. Apparently."});
-    m_map.insert({"Options", "There is more than one way forward. Most of them are probably wrong."});
-    m_map.insert({"Graphics", "Sometimes seeing is believing. Sometimes it is just bad graphics."});
-    m_map.insert({"Credits", "Someone had to make all this. Sorry."});
-    m_map.insert({"Cancel", "Not every decision needs to be final. Especially this one."});
-    m_map.insert(
-        {"Quit Game(On development)", "Every game eventually comes to an end. This one can end sooner."}
-    );
-    m_map.insert({"Video", "Some things are easier to understand when you see them. Some aren't."});
-    m_map.insert({"Language", "Words mean different things to different people. Especially mine."});
-    m_map.insert({"Start", "Everything has to begin somewhere. This seems as good a place as any."});
-    m_map.insert({"Stop", "Knowing when to stop is important. I should probably follow my own advice."});
-    m_map.insert({"<Invalid>", "Even mistakes can point you somewhere. Usually somewhere useless."});
-    m_map.insert(
-        {"------", "Sometimes the least obvious path is worth following. Sometimes it is just a line."}
-    );
-    m_map.insert({"Do not click!", "They wouldn't warn you without a reason."});
-    m_map.insert({"Click Me!", "At least this one is honest."});
-    m_map.insert({"*******", "Some secrets are better left unexplained. Like this one."});
-    m_map.insert(
-        {"Reset password",
-         "Sometimes forgetting is the first step. Remembering the password would be better."}
-    );
-    m_map.insert({"Create Account", "Every identity has to start somewhere. This is probably legal."});
-    m_map.insert({"Log  in", "Someone is expecting you. Hopefully it is you."});
-    m_map.insert({"Log out", "Even visitors have to leave eventually. Probably."});
-    m_map.insert({"Security", "Not everything should be trusted. Especially menus."});
-    m_map.insert({"This is not a valid option", "Perhaps the wrong choice is hiding the right one."});
-    m_map.insert(
-        {"This is neither a valid option", "Two wrong answers still leave one possibility. I think."}
-    );
-    m_map.insert({"Stop? ", "You may want to reconsider before going further. Or don't."});
-    m_map.insert({"Reload", "Sometimes a second look changes everything. Sometimes it just reloads."});
-    m_map.insert(
-        {"Quit Game",
-         "Every game eventually comes to an end. Congratulations on making it this far! You have completed "
-         "the game and reached the end. Thank you for playing!"}
-    );
-
-    // Populate the menu items vector with the keys from the map to insert them into the menu in a random
-    // order
+    // Populate the menu items vector with the keys from the map to insert them into the menu in a random order
     m_buttons_text.clear();
     m_unused_indices.clear();
 
-    int index = 0;
-    for (const auto& it : m_map)
+    int index { 0 };
+    for(const auto& it : MITM_MAP)
     {
-        m_buttons_text.push_back(it.first);
-        m_unused_indices.push_back(
-            index
-        ); // Store the index of the item that has been stored as a random button to click in the game. This
-           // will be used to avoid showing the same item again in the menu.
-        ++index;
+        m_buttons_text.push_back(it.first.data());
+        m_unused_indices.push_back(index++); // Store the index of the item that has been stored as a random button to click in the game. This will be used to avoid showing the same item again in the menu. 
     }
-
-    LOGGER.info("Map reconfigured. {0:d} available items", m_map.size());
 }
 
 //-----------------------------------------------------------------------------
@@ -228,7 +264,7 @@ void Game::createRandomMenu()
 
     int selectedIndex = selectRandomIndex();
 
-    const std::string& buttonText = m_buttons_text.at(m_unused_indices.at(selectedIndex));
+    auto const hint = MITM_MAP.at(buttonText);
 
     auto hint = m_map.at(buttonText);
 
@@ -252,9 +288,11 @@ void Game::createRandomMenu()
         m_current_pair.second
     ); // Show the hint for the item that the user has to click on in the game.
 
-    for (std::size_t i = 0; i < m_unused_indices.size() && i < randomNumberOfItems; ++i)
-    {
-        int randomIndex {0};
+    m_hints->items()[0]->text = std::string(SV_HINT.data()) + hint.data();
+
+    for(std::size_t i = 0; i < m_unused_indices.size() && i < randomNumberOfItems; ++i)
+    {            
+        int randomIndex{0};
 
         do
         {

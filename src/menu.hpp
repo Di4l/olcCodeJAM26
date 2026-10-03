@@ -19,6 +19,8 @@ namespace codejam26
     namespace menu
     {
         //---------------------------------------------------------------------
+        class manager_t;
+        //---------------------------------------------------------------------
 
         namespace item
         {
@@ -43,26 +45,51 @@ namespace codejam26
     class menu_t : public olc::Image
     {
     public:
-        inline olc::vf2d&   position() { return m_pos;   }
-        inline menu::items& items()    { return m_items; }
+        [[nodiscard]] inline olc::vf2d&   position() { return m_pos;   }
+        [[nodiscard]] inline menu::items& items()    { return m_items; }
 
         inline void moveTo(olc::vf2d const& pos) { m_pos = pos; }
 
-        bool onClicked(olc::PixelGameEngine* engine, olc::vf2d const& pos);
-        void draw(olc::PixelGameEngine* engine, olc::vf2d const& pos = INVALID_VF2D);
+        [[maybe_unused]] bool onClicked(olc::vf2d const& pos);
+        [[nodiscard]]    bool isHit(olc::vf2d const& pos);
+        
         void configureMouse(olc::PixelGameEngine* engine, olc::hw::Mouse& mouse);
 
+        void draw(olc::vf2d const& pos = INVALID_VF2D);
+
     protected:
-        menu::item_s clickedItem(olc::PixelGameEngine* engine, olc::vf2d const& relpos);
+        [[nodiscard]] menu::item_s clickedItem(olc::vf2d const& relpos);
 
     private:
-        olc::vf2d   m_pos {0, 0};
+        olc::vf2d   m_pos   {0,0};
         menu::items m_items {};
-
-        inline bool isInside(olc::vf2d const& pos);
     };
     //-------------------------------------------------------------------------
-    using menu_s = std::shared_ptr<menu_t>;
+    using menu_s  = std::shared_ptr<menu_t>;
+    using menus_t = std::vector<menu_s>;
+    //-------------------------------------------------------------------------
+
+    namespace menu
+    {
+        //---------------------------------------------------------------------
+
+        class manager_t
+        {
+        public:
+            [[nodiscard]] menus_t& menus() { return m_menus;        }
+            [[nodiscard]] size_t   size()  { return m_menus.size(); }
+
+            [[nodiscard]] menu_s spawnMenuAt(olc::vf2d const& pos);
+            [[nodiscard]] menu_s menuAt(olc::vf2d const& pos);
+
+            void draw();
+
+        protected:
+        private:
+            menus_t m_menus{};
+        };
+        //---------------------------------------------------------------------
+    }
     //-------------------------------------------------------------------------
 } // namespace codejam26
 //-----------------------------------------------------------------------------
