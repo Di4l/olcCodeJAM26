@@ -111,11 +111,12 @@ menu::item_s menu_t::clickedItem(olc::vf2d const& relpos)
 
 
 
-menu_s menu::manager_t::spawnMenuAt(olc::vf2d const& pos)
+menu_s menu::manager_t::spawnMenu()
 {
-    MN_LOGGER.info("Create menu at {},{}", pos.x, pos.y);
     auto mn { m_menus.emplace_back(new menu_t) };
-    GAME.CreateImage(*mn, pos);
+    MN_LOGGER.debug(" - menu address 0x{:x}", reinterpret_cast<std::uintptr_t>(mn.get()));
+    GAME.CreateImage(*mn, {10, 10});
+    MN_LOGGER.debug(" - menu image created");
     return mn;
 }
 //-----------------------------------------------------------------------------

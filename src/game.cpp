@@ -4,6 +4,8 @@
 
 #include <map>
 #include <string_view>
+#include <random>
+
 //-- Include asset file headers
 // #include <retro_blop_18.hpp>
 #include <keyboard001.hpp>
@@ -85,6 +87,9 @@ static const std::map<std::string_view, std::string_view> MITM_MAP
 
 
 
+std::mt19937 Game::m_rnd_engine { std::random_device{}() };
+//-----------------------------------------------------------------------------
+
 Game& Game::instance()
 {
     static std::unique_ptr<Game> m_singleton { new Game };
@@ -94,14 +99,18 @@ Game& Game::instance()
 
 bool Game::OnUserCreate()
 {
-    //-- Feed the rand() function with a seed
-    LOGGER.info("Initialize random seed");
-    std::srand(std::time({}));
     //-- Initialize the audio engine: Install the extension and load sounds
     LOGGER.info("Initialize audio engine");
     initializeAudioEngine();
     LOGGER.info("Initialize menus");
     configureMap();
+    #ifdef SPDLOG_ACTIVE_LEVEL
+    #  if (SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_DEBUG)
+        LOGGER.debug("Available menu items:");
+        for (auto const& itm : MITM_MAP)
+            LOGGER.debug("'{}: {}'", itm.first, itm.second);
+    #  endif
+    #endif
 
     LOGGER.info("Create hints rectangle");
     m_hints = std::make_shared<menu_t>();
@@ -145,10 +154,17 @@ bool Game::OnUserCreate()
         )
     );
 
-    // auto window_position = GetWindowPosition();
-    // window_position.y = window_position.y / 2;
-    // window_position.x = window_position.x / 2;
-
+    LOGGER.debug("Try creating a menu within the manager...");
+    auto mn { m_menu_mgr.spawnMenu() };
+    LOGGER.debug(" - Menu created with address 0x{:x}", reinterpret_cast<std::uintptr_t>(mn.get()));
+    if(mn)
+    {
+        LOGGER.debug(" - Place menu at 500, 50");
+        mn->moveTo({500.0f, 50.0f});
+        LOGGER.debug(" - Create menu item...");
+        mn->items().push_back(std::make_shared<menu::item_t>("Probando", nullptr));
+        LOGGER.debug(" - ...done!");
+    }
 
     LOGGER.info("Create starting menu");
     createRandomMenu();
@@ -167,6 +183,9 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
     bool running = true;
     //-- Store where the mouse was first pressed
     static olc::vf2d mouse_pos_pressed {};
+    static olc::vf2d menu_offset_pos {};
+    static menu_s    menu_pressed { nullptr };
+    static bool      menu_moving { false };
 
     //-- Clear the screen and fill it in the background color
     draw.Clear(CLR_BACKGROUND);
@@ -184,17 +203,44 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
     //   pass a second parameter to draw() with the desired position
     m_menu->draw({20, 10});
 
+    m_menu_mgr.draw();
+
     //-- Get the mouse position
     auto lft_btn_status {mouse.GetButton(0)};
     if(lft_btn_status.bPressed)
     {
-        
+        mouse_pos_pressed = mouse.GetPosition();
+        menu_pressed      = m_menu_mgr.menuAt(mouse_pos_pressed);
+        menu_offset_pos   = menu_pressed ? (mouse_pos_pressed - menu_pressed->position()) : olc::vf2d(0.0, 0.0);
+    }
+    else if (lft_btn_status.bHeld)
+    {
+        if(menu_pressed)
+        {   //-- Has it actually moved??
+            auto mdisplaced = mouse.GetPosition() - mouse_pos_pressed;
+            if(mdisplaced.abs() > olc::vf2d(2.0f, 2.0f) )
+            {
+                if(!menu_moving)
+                    LOGGER.debug("Moving menu...");
+                menu_moving = true;
+                menu_pressed->moveTo(mouse.GetPosition() - menu_offset_pos);
+            }
+        }
     }
     else if(lft_btn_status.bReleased)
     { //-- Get the menu that lies at original button press
-        m_menu->onClicked(mouse_pos_pressed);
+        if(menu_moving)
+        {
+            menu_moving     = false;
+            menu_pressed    = nullptr;
+            menu_offset_pos = {0.0f,0.0f};
+            LOGGER.debug("...stop moving menu");
+        }
+        else
+        {
+            m_menu->onClicked(mouse_pos_pressed);
+        }
     }
-
     
     auto halfScreen = (draw.GetTargetSize() - main_menu->Size()) / 2;
     if (m_current_state == MainMenuOptions::MAIN_MENU)
@@ -246,21 +292,10 @@ void Game::configureMap()
 
 void Game::createRandomMenu()
 {
-#ifdef SPDLOG_ACTIVE_LEVEL
-#    if (SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_DEBUG)
-    LOGGER.debug("Unused: ");
-    for (int index : m_unused_indices)
-    {
-        LOGGER.debug("'{}'", m_buttons_text[index]);
-    }
-#    endif
-#endif
     m_menu.reset(new menu_t());
 
     //-- Declare as size_t to avoid warning on the for loop below when comparing variables...
-    size_t randomNumberOfItems
-        = rand() % 7
-        + 1; // Generate a random number between 1 and 7 this will be the elements shown in the menu
+    auto randomNumberOfItems = random<size_t, 1, 7>(); // Generate a random number between 1 and 7 this will be the elements shown in the menu
 
     int selectedIndex = selectRandomIndex();
 
@@ -296,15 +331,14 @@ void Game::createRandomMenu()
 
         do
         {
-            randomIndex = rand() % m_unused_indices.size();
-        } while (m_buttons_text.at(m_unused_indices.at(randomIndex)) == "Quit Game");
+            randomIndex = random<size_t>(0, m_unused_indices.size());
+        }
+        while(m_buttons_text.at(m_unused_indices.at(randomIndex)) == "Quit Game");
 
         int itemIndex = m_unused_indices.at(randomIndex);
         eraseUsedIndices(randomIndex);
-
-        bool randomBool = rand() % 2; // Generate a random boolean to decide if we will introduce the item at
-                                      // the beginning or at the end of the menu. This is to avoid having the
-                                      // same item always at the same position in the menu.
+        
+        bool randomBool = random(); // Generate a random boolean to decide if we will introduce the item at the beginning or at the end of the menu. This is to avoid having the same item always at the same position in the menu.
 
         // Add the item to the menu with its corresponding callback
         if (randomBool)
@@ -377,17 +411,9 @@ int Game::selectRandomIndex()
     int selectedIndex {0};
     do
     {
-        selectedIndex
-            = rand()
-            % (m_unused_indices.size()); // Generate a random index to get the correct item to click on the
-                                         // game. If the counter is less than 2, we will not show the last
-                                         // item in the menu, which is "Quit Game" to avoid ending the game
-                                         // too soon. After 2 clicks, we will allow the last item to be shown.
-    } while (! showQuitGame
-             && m_buttons_text.at(m_unused_indices.at(selectedIndex))
-                    == "Quit Game"); // If the counter is less than 2, we will not show the last item in the
-                                     // menu, which is "Quit Game" to avoid ending the game too soon. After 2
-                                     // clicks, we will allow the last item to be shown.
+        selectedIndex = random<int>(0, m_unused_indices.size()) ; // Generate a random index to get the correct item to click on the game. If the counter is less than 2, we will not show the last item in the menu, which is "Quit Game" to avoid ending the game too soon. After 2 clicks, we will allow the last item to be shown.
+    }
+    while(!showQuitGame && m_buttons_text.at(m_unused_indices.at(selectedIndex)) == "Quit Game"); // If the counter is less than 2, we will not show the last item in the menu, which is "Quit Game" to avoid ending the game too soon. After 2 clicks, we will allow the last item to be shown.
 
     return selectedIndex;
 }

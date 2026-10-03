@@ -1,11 +1,13 @@
 //-----------------------------------------------------------------------------
 #pragma once
 //-----------------------------------------------------------------------------
-#include "logger.hpp"
-#include <functional>
-#include <memory>
 #include <olcPixelGameEngine3.h>
+
+#include "logger.hpp"
+
+#include <functional>
 #include <vector>
+#include <memory>
 //-----------------------------------------------------------------------------
 #define MN_LOGGER codejam26::Logger::get("menu")
 //-----------------------------------------------------------------------------
@@ -24,9 +26,8 @@ namespace codejam26
 
         namespace item
         {
-        using action = std::function<bool(void)>;
-        } // namespace item
-
+            using action = std::function<bool(void)>;
+        }
         //---------------------------------------------------------------------
 
         struct item_t
@@ -34,12 +35,11 @@ namespace codejam26
             std::string text {};
             item::action onClicked {};
         };
-
         //---------------------------------------------------------------------
         using item_s = std::shared_ptr<item_t>;
         using items = std::vector<item_s>;
         //---------------------------------------------------------------------
-    } // namespace menu
+    }
     //-------------------------------------------------------------------------
 
     class menu_t : public olc::Image
@@ -79,7 +79,7 @@ namespace codejam26
             [[nodiscard]] menus_t& menus() { return m_menus;        }
             [[nodiscard]] size_t   size()  { return m_menus.size(); }
 
-            [[nodiscard]] menu_s spawnMenuAt(olc::vf2d const& pos);
+            [[nodiscard]] menu_s spawnMenu();
             [[nodiscard]] menu_s menuAt(olc::vf2d const& pos);
 
             void draw();
@@ -91,6 +91,6 @@ namespace codejam26
         //---------------------------------------------------------------------
     }
     //-------------------------------------------------------------------------
-} // namespace codejam26
+}
 //-----------------------------------------------------------------------------
 
