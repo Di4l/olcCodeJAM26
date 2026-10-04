@@ -64,7 +64,8 @@ void menu_t::draw(olc::vf2d const& pos)
         menu_sz.y += (isz.y + MENU_ITEM_GAP);
     }
     //-- Resize menu to accomodate all its entries
-    Resize(menu_sz + MENU_MARGIN);
+    menu_sz.y -= MENU_ITEM_GAP;
+    Resize(menu_sz + (MENU_MARGIN * 2.0f));
 
     //-- Start drawing the menu
     ge_draw.SetTarget(*this);

@@ -45,11 +45,12 @@ namespace codejam26
     class menu_t : public olc::Image
     {
     public:
-        [[nodiscard]] inline olc::vf2d&   position() { return m_pos;     }
-        [[nodiscard]] inline bool&        visible()  { return m_visible; }
-        [[nodiscard]] inline menu::items& items()    { return m_items;   }
+        [[nodiscard]] inline olc::vf2d&   position() { return m_pos;      }
+        [[nodiscard]] inline bool&        visible()  { return m_visible;  }
+        [[nodiscard]] inline bool&        moveable() { return m_moveable; }
+        [[nodiscard]] inline menu::items& items()    { return m_items;    }
 
-        inline void moveTo(olc::vf2d const& pos) { m_pos = pos; }
+        inline void moveTo(olc::vf2d const& pos) { if(m_moveable) m_pos = pos; }
 
         [[maybe_unused]] bool onClicked(olc::vf2d const& pos);
         [[nodiscard]]    bool isHit(olc::vf2d const& pos);
@@ -62,6 +63,7 @@ namespace codejam26
     private:
         olc::vf2d   m_pos     {0,0};
         bool        m_visible {true};
+        bool        m_moveable {true};
         menu::items m_items   {};
     };
     //-------------------------------------------------------------------------

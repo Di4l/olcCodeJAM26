@@ -102,7 +102,7 @@ bool Game::OnUserCreate()
     //-- Initialize the audio engine: Install the extension and load sounds
     LOGGER.info("Initialize audio engine");
     initializeAudioEngine();
-    LOGGER.info("Initialize menus");
+    LOGGER.info("Initialize available menu items");
     configureMap();
     #ifdef SPDLOG_ACTIVE_LEVEL
     #  if (SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_DEBUG)
@@ -115,14 +115,13 @@ bool Game::OnUserCreate()
     LOGGER.info("Create hints rectangle");
     m_hints = std::make_shared<menu_t>();
     m_hints->items().push_back(std::make_shared<menu::item_t>(SV_HINT.data(), nullptr));
+    CreateImage(*m_hints, {0, 350});
 
     LOGGER.info("Create main menu");
     createMainMenu();
 
     LOGGER.info("Create starting menu");
     createRandomMenu();
-
-    CreateImage(*m_hints, {0, 350});
 
     LOGGER.info("Game instance created and initialized");
     return true;
@@ -147,7 +146,7 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
     draw.StringProp((wsz - tsz) / 2, SV_INTRO.data());
 
     //-- draw the Hints first, so if anything is overlapped, the Hints are at the bottom
-    auto hsz { draw.GetTextSize(m_hints->items()[0]->text, true) };
+    auto hsz { m_hints->Size() };
     m_hints->draw({ (wsz.x - hsz.x) / 2.0f, (wsz.y - hsz.y) - 10.0f });
 
     //-- If we wanted to draw the menu at a different coordinates, we could
@@ -158,8 +157,11 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
 
     //-- Draw all the other menus
     m_menu_mgr.draw();
-    if(m_main_menu->visible())
+    if(m_main_menu->moveable() && m_main_menu->visible())
+    {   //-- Draw the main menu in the middle of the Window and then make it fixed (unmoveable)
         m_main_menu->moveTo((draw.GetTargetSize() - m_main_menu->Size()) / 2.0f);
+        m_main_menu->moveable() = false;    //-- Lock main menu in place
+    }
 
     //-- Get the left mouse button status and handle it
     auto lft_btn_status {mouse.GetButton(0)};
@@ -200,7 +202,6 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
         }
     }
 
-    auto halfScreen = (draw.GetTargetSize() - m_main_menu->Size()) / 2;
     // if (m_game_state == GameState::MAIN_MENU)
     // {
     //     main_menu->draw(halfScreen);
@@ -234,133 +235,96 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
 
 void Game::configureMap()
 {
-    // Populate the menu items vector with the keys from the map to insert them into the menu in a random order
-    m_buttons_text.clear();
-    m_unused_indices.clear();
-
-    int index { 0 };
-    for(const auto& it : MITM_MAP)
-    {
-        m_buttons_text.push_back(it.first.data());
-        m_unused_indices.push_back(index++); // Store the index of the item that has been stored as a random button to click in the game. This will be used to avoid showing the same item again in the menu. 
-    }
+    for(auto const& [txt, _] : MITM_MAP)
+        m_available_items.push_back(txt.data());
 }
 //-----------------------------------------------------------------------------
 
 void Game::createRandomMenu()
 {
+    //-- If no more items available, cannot create a menu
+    if(!m_available_items.size())
+        return;
+
     //-- Create a new menu
     auto menu { m_menu_mgr.spawnMenu() };
+    //-- Choose a random number of menu elements between 1 and 7 (or available items left)
+    auto randomNumberOfItems = random<size_t>(1, std::min<size_t>(7, m_available_items.size()));
 
-    //-- Declare as size_t to avoid warning on the for loop below when comparing variables...
-    auto randomNumberOfItems = random<size_t, 1, 7>(); // Generate a random number between 1 and 7 this will be the elements shown in the menu
+    //-- Choose a random element out of the available vectors...
+    //   This shall be the correct menu item to click
+    auto       selectedIndex = random<int>(0, m_available_items.size());
+    auto const buttonText    = m_available_items[selectedIndex];
+    auto const hint          = MITM_MAP.at(buttonText);
 
-    auto selectedIndex = selectRandomIndex();
-    const std::string& buttonText = m_buttons_text.at(m_unused_indices.at(selectedIndex)); 
-
-    auto const hint = MITM_MAP.at(buttonText);
-
-    //-- Store the item and its corresponding hint that the user has to click on in the game. This is used to
-    //   know which item the user has to click on in the game and to show the hint for that item.
-    m_current_pair = std::make_pair(buttonText, hint);
-
-    //-- Remove the index of the item that has been stored as the correct button to click in the game. This
-    //   will be used to avoid showing the same item again in the menu.
-    eraseUsedIndices(selectedIndex);
+    //-- Remove the selected element from the list ov available items.. do not want to pick
+    //   it up more than once
+    m_available_items.erase(m_available_items.begin() + selectedIndex);
 
     //-- Add the correct item to the menu with its corresponding callback
-    menu->items().emplace_back(new menu::item_t(buttonText, std::bind_front(&Game::correctButtonClicked, this)));
-    LOGGER.debug("Correct button: '{}'", m_current_pair.first);
-    LOGGER.debug(" - Hint: '{}'", m_current_pair.second ); // Show the hint for the item that the user has to click on in the game.
-
+    menu->items().emplace_back(new menu::item_t(buttonText.data(), std::bind_front(&Game::correctButtonClicked, this)));
+    //-- Add the hint to the hints rectangle
     m_hints->items()[0]->text = std::string(SV_HINT.data()) + hint.data();
 
-    for(std::size_t i = 0; i < m_unused_indices.size() && i < randomNumberOfItems; ++i)
+    LOGGER.debug("Correct button: '{}'", buttonText.data());
+    LOGGER.debug(" - Hint: '{}'",        hint.data()); // Show the hint for the item that the user has to click on in the game.
+
+    //-- Populate the rest of the menu with incorrect items
+    while(menu->items().size() < randomNumberOfItems)
     {            
         int randomIndex{0};
-
         do
-        {
-            randomIndex = random<size_t>(0, m_unused_indices.size());
+        {   //-- Make sure we do not pick "Quit Game" which is always the correct menu item
+            randomIndex = random<size_t>(0, m_available_items.size());
         }
-        while(m_buttons_text.at(m_unused_indices.at(randomIndex)) == "Quit Game");
+        while(m_available_items[randomIndex] == "Quit Game");
 
-        int itemIndex = m_unused_indices.at(randomIndex);
-        eraseUsedIndices(randomIndex);
-        
-        // Generate a random boolean to decide if we will introduce the item at the beginning or at the end of the menu. This is to avoid having the same item always at the same position in the menu.
+        //-- Get the name of the item to add
+        auto const map_key { m_available_items[randomIndex] };
+        //-- Remove from available list
+        m_available_items.erase(m_available_items.begin() + randomIndex);
+
+        //-- Generate a random boolean to decide if we will introduce the item at the beginning or at the
+        //   end of the menu. This is to avoid having the same item always at the same position in the menu.
         bool randomBool = random();
-
         // Add the item to the menu with its corresponding callback
         if (randomBool)
         {
-            menu->items().emplace_back(
-                std::make_shared<menu::item_t>(
-                    m_buttons_text.at(itemIndex),
-                    std::bind_front(&Game::incorrectButtonClicked, this)
-                )
-            );
+            menu->items().emplace_back(new menu::item_t(
+                    map_key.data(),
+                    std::bind_front(&Game::incorrectButtonClicked, this)));
         }
         else
         {
             menu->items().insert(
                 menu->items().begin(),
                 std::make_shared<menu::item_t>(
-                    m_buttons_text.at(itemIndex),
-                    std::bind_front(&Game::incorrectButtonClicked, this)
-                )
-            );
+                    map_key.data(),
+                    std::bind_front(&Game::incorrectButtonClicked, this)));
         }
     }
 }
 //-----------------------------------------------------------------------------
 
-void Game::eraseUsedIndices(int index)
-{
-    m_unused_indices.erase(
-        m_unused_indices.begin() + index
-    ); // Store the index of the item that has been stored as the correct button to click in the game. This
-       // will be used to avoid showing the same item again in the menu.
-}
-//-----------------------------------------------------------------------------
-
 bool Game::incorrectButtonClicked()
 {
-    LOGGER.debug("Incorrect!! Pressed '{}'", m_current_pair.first);
+    LOGGER.debug("Incorrect!!");
     m_counter = 0; // Reset the counter to 0 if the user clicks on an incorrect item. This is to avoid showing
                    // the "Quit Game" option too soon.
-    configureMap();
+    // configureMap();
     createRandomMenu();
-    playClickSound();
     return true;
 }
 //-----------------------------------------------------------------------------
 
 bool Game::correctButtonClicked()
 {
-    LOGGER.debug("Correct!! Pressed '{}'", m_current_pair.first);
+    LOGGER.debug("Correct!!");
     ++m_counter; // Increment the counter if the user clicks on the correct item. This is used to determine
                  // when to show the "Quit Game" option in the menu and to know how many times the user has
                  // clicked on the menu items before the game ends.
     createRandomMenu();
-    playClickSound();
-    LOGGER.info("Hint: {}", m_current_pair.second);
     return true;
-}
-//-----------------------------------------------------------------------------
-
-int Game::selectRandomIndex()
-{
-    bool showQuitGame {m_counter >= 2}; // Show the "Quit Game" option only after 2 clicks have been made in
-                                        // the game. This is to avoid ending the game too soon.
-    int selectedIndex {0};
-    do
-    {
-        selectedIndex = random<int>(0, m_unused_indices.size()) ; // Generate a random index to get the correct item to click on the game. If the counter is less than 2, we will not show the last item in the menu, which is "Quit Game" to avoid ending the game too soon. After 2 clicks, we will allow the last item to be shown.
-    }
-    while(!showQuitGame && m_buttons_text.at(m_unused_indices.at(selectedIndex)) == "Quit Game"); // If the counter is less than 2, we will not show the last item in the menu, which is "Quit Game" to avoid ending the game too soon. After 2 clicks, we will allow the last item to be shown.
-
-    return selectedIndex;
 }
 //-----------------------------------------------------------------------------
 
@@ -373,7 +337,7 @@ void Game::createMainMenu()
             {
                 LOGGER.info("Init presses");
                 m_game_state = GameState::GAME;
-                // m_main_menu->visible() = false;
+                m_main_menu->visible() = false;
                 return true;
             }
         )
