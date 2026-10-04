@@ -8,7 +8,9 @@
 
 //-- Include asset file headers
 // #include <retro_blop_18.hpp>
-#include <keyboard001.hpp>
+#include <click_button.hpp>
+#include <action_wrong.hpp>
+#include <action_correct.hpp>
 //-----------------------------------------------------------------------------
 using namespace codejam26;
 //-----------------------------------------------------------------------------
@@ -312,7 +314,6 @@ void Game::removeAllGameMenus()
         while(*it == m_main_menu) ++it;
         menus.erase(it);
     }
-    LOGGER.info("  - total menus in game: {}", menus.size() - 1);
     configureMap();
 }
 //-----------------------------------------------------------------------------
@@ -322,6 +323,7 @@ bool Game::incorrectButtonClicked()
     LOGGER.debug("Incorrect!!");
     m_counter = 0; // Reset the counter to 0 if the user clicks on an incorrect item. This is to avoid showing
                    // the "Quit Game" option too soon.
+    playIncorrectSound();
     removeAllGameMenus();
     createRandomMenu();
     return true;
@@ -334,6 +336,7 @@ bool Game::correctButtonClicked()
     ++m_counter; // Increment the counter if the user clicks on the correct item. This is used to determine
                  // when to show the "Quit Game" option in the menu and to know how many times the user has
                  // clicked on the menu items before the game ends.
+    playCorrectSound();
     createRandomMenu();
     return true;
 }
@@ -376,32 +379,29 @@ void Game::createMainMenu()
 }
 //-----------------------------------------------------------------------------
 
-void Game::playClickSound()
+void Game::playSound(olc::ext::Miniaudio::Sound& sound)
 {
-    if (m_sound_click.IsLoaded())
-    {
-        m_sound_click.Play();
-    }
+    if(sound.IsLoaded())
+        sound.Play();
     else
-    {
-        LOGGER.error("Click sound not loaded. Cannot play it!");
-    }
+        LOGGER.error("Sound not loaded. Cannot play it!");
 }
 //-----------------------------------------------------------------------------
 
 void Game::initializeAudioEngine()
 {
     //-- Load the miniaudio extension
-    if (! InstallSystemExtension(&m_audio))
+    if (!InstallSystemExtension(&m_audio))
     {
         LOGGER.error("Failed to install olcPGEX3_miniaudio");
         throw std::runtime_error("Failed to install olcPGEX3_miniaudio");
     }
 
-    if (! m_audio
-              .CreateSoundFromMemory(m_sound_click, assets::keyboard001.data(), assets::keyboard001.size()))
-    {
-        LOGGER.error("Could not load audio 'keyboard001' from memory");
-    }
+    if(!m_audio.CreateSoundFromMemory(m_sound_click, assets::click_button.data(), assets::click_button.size()))
+        LOGGER.error("Could not load audio 'click_button' from memory");
+    if(!m_audio.CreateSoundFromMemory(m_sound_right, assets::action_correct.data(), assets::action_correct.size()))
+        LOGGER.error("Could not load audio 'action_correct' from memory");
+    if(!m_audio.CreateSoundFromMemory(m_sound_wrong, assets::action_wrong.data(), assets::action_wrong.size()))
+        LOGGER.error("Could not load audio 'action_wrong' from memory");
 }
 //-----------------------------------------------------------------------------

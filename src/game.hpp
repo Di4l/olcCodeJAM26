@@ -42,7 +42,9 @@ namespace codejam26
         bool OnUserCreate() override;
         bool OnUserUpdate(float /*fElapsedTime*/) override;
 
-        void playClickSound();
+        void playClickSound()     { playSound(m_sound_click); }
+        void playCorrectSound()   { playSound(m_sound_right); }
+        void playIncorrectSound() { playSound(m_sound_wrong); }
 
         template <typename T, T min, T max>
         T random()
@@ -77,6 +79,8 @@ namespace codejam26
         void createMainMenu();
 
         void initializeAudioEngine();
+        void playSound(olc::ext::Miniaudio::Sound& sound);
+
         void configureMap();
         void removeAllGameMenus();
 
@@ -85,6 +89,8 @@ namespace codejam26
 
         olc::ext::Miniaudio::AudioEngine m_audio       {};
         olc::ext::Miniaudio::Sound       m_sound_click {};
+        olc::ext::Miniaudio::Sound       m_sound_right {};
+        olc::ext::Miniaudio::Sound       m_sound_wrong {};
 
         static std::mt19937 m_rnd_engine;
 

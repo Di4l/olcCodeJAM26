@@ -125,14 +125,20 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 
 # Embed the assets into the binary
 embed_asset(${PROJECT_NAME}
-    "${CMAKE_SOURCE_DIR}/assets/retro_blop_18.wav"
-    retro_blop_18
+    "${CMAKE_SOURCE_DIR}/assets/keyboard_001.wav"
+    click_button
 )
 
 embed_asset(${PROJECT_NAME}
-    "${CMAKE_SOURCE_DIR}/assets/keyboard_001.wav"
-    keyboard001
+    "${CMAKE_SOURCE_DIR}/assets/retro_blop_18.wav"
+    action_correct
 )
+
+embed_asset(${PROJECT_NAME}
+    "${CMAKE_SOURCE_DIR}/assets/retro_event_wrong_simple_03.wav"
+    action_wrong
+)
+
 # ============================================================
 # Linux dependencies
 # ============================================================
