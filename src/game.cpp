@@ -57,7 +57,7 @@ static const std::map<std::string_view, std::string_view> MITM_MAP
     {"Graphics", "Sometimes seeing is believing. Sometimes it is just bad graphics."},
     {"Credits", "Someone had to make all this. Sorry."},
     {"Cancel", "Not every decision needs to be final. Especially this one."},
-    {"Quit Game(On development)", "Every game eventually comes to an end. This one can end sooner."},
+    {"Quit Game (WIP)", "Every game eventually comes to an end. This one can end sooner."},
     {"Video", "Some things are easier to understand when you see them. Some aren't."},
     {"Language", "Words mean different things to different people. Especially mine."},
     {"Start", "Everything has to begin somewhere. This seems as good a place as any."},
@@ -74,9 +74,9 @@ static const std::map<std::string_view, std::string_view> MITM_MAP
     {"Security", "Not everything should be trusted. Especially menus."},
     {"This is not a valid option", "Perhaps the wrong choice is hiding the right one."},
     {"This is neither a valid option", "Two wrong answers still leave one possibility. I think."},
-    {"Stop? ", "You may want to reconsider before going further. Or don't."},
+    {"Stop?", "You may want to reconsider before going further. Or don't."},
     {"Reload", "Sometimes a second look changes everything. Sometimes it just reloads."},
-    {"Quit Game", "Every game eventually comes to an end. Congratulations on making it this far! You have completed the game and reached the end. Thank you for playing!)"}
+    {"Quit Game", "Finally!!"}
 };
 //-----------------------------------------------------------------------------
 
@@ -239,8 +239,13 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
 void Game::configureMap()
 {
     LOGGER.debug("Populating available items with ALL possible");
+    m_available_items.clear();
     for(auto const& [txt, _] : MITM_MAP)
+    {
         m_available_items.push_back(txt.data());
+        LOGGER.debug(" - added '{}'", txt.data());
+    }
+    LOGGER.debug("Total available entries '{}'", m_available_items.size());
 }
 //-----------------------------------------------------------------------------
 
@@ -257,10 +262,11 @@ void Game::createRandomMenu()
 
     //-- Choose a random element out of the available vectors...
     //   This shall be the correct menu item to click
-    auto       selectedIndex = random<int>(0, m_available_items.size());
+    auto       selectedIndex = random<int>(0, m_available_items.size() - 1);
     auto const buttonText    = m_available_items[selectedIndex];
     auto const hint          = MITM_MAP.at(buttonText);
 
+    // LOGGER.debug("Selected index for correct item: {} ({}: {})", selectedIndex, buttonText, hint.data());
     //-- Remove the selected element from the list ov available items.. do not want to pick
     //   it up more than once
     m_available_items.erase(m_available_items.begin() + selectedIndex);
@@ -273,8 +279,8 @@ void Game::createRandomMenu()
     //-- Add the hint to the hints rectangle
     m_hints->items().emplace_back(new menu::item_t(std::string(SV_HINT.data()) + hint.data(), nullptr));
 
-    LOGGER.debug("Correct button: '{}'", buttonText.data());
-    LOGGER.debug(" - Hint: '{}'",        hint.data()); // Show the hint for the item that the user has to click on in the game.
+    LOGGER.info("Correct button: '{}'", buttonText.data());
+    LOGGER.info(" - Hint: '{}'",        hint.data()); // Show the hint for the item that the user has to click on in the game.
 
     //-- Populate the rest of the menu with incorrect items
     while(menu->items().size() < randomNumberOfItems)
@@ -282,34 +288,25 @@ void Game::createRandomMenu()
         int randomIndex{0};
         do
         {   //-- Make sure we do not pick "Quit Game" which is always the correct menu item
-            randomIndex = random<size_t>(0, m_available_items.size());
+            randomIndex = random<size_t>(0, m_available_items.size() - 1);
         }
         while(m_available_items[randomIndex] == "Quit Game");
-
         //-- Get the name of the item to add
         auto const map_key { m_available_items[randomIndex] };
+        // LOGGER.debug("Selected index for incorrect item: {} ({}: {})", randomIndex, map_key, MITM_MAP.at(map_key).data());
         //-- Remove from available list
         m_available_items.erase(m_available_items.begin() + randomIndex);
 
-        //-- Generate a random boolean to decide if we will introduce the item at the beginning or at the
-        //   end of the menu. This is to avoid having the same item always at the same position in the menu.
-        bool randomBool = random();
-        // Add the item to the menu with its corresponding callback
-        if (randomBool)
-        {
-            menu->items().emplace_back(new menu::item_t(
-                    map_key.data(),
-                    std::bind_front(&Game::incorrectButtonClicked, this)));
-        }
-        else
-        {
-            menu->items().insert(
-                menu->items().begin(),
-                std::make_shared<menu::item_t>(
-                    map_key.data(),
-                    std::bind_front(&Game::incorrectButtonClicked, this)));
-        }
+        menu->items().emplace_back(new menu::item_t(
+                map_key.data(),
+                std::bind_front(&Game::incorrectButtonClicked, this)));
     }
+    //-- Desordena los elementos
+    std::shuffle(menu->items().begin(), menu->items().end(), m_rnd_engine);
+
+    // LOGGER.debug("Remaining available items");
+    // for(auto const& ai : m_available_items)
+    //     LOGGER.debug(" - {}", ai);
 }
 //-----------------------------------------------------------------------------
 
