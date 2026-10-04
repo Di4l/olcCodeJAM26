@@ -4,6 +4,7 @@
 #include <map>
 #include <string_view>
 #include <random>
+#include <functional>
 
 //-- Include asset file headers
 // #include <retro_blop_18.hpp>
@@ -119,7 +120,6 @@ bool Game::OnUserCreate()
     createMainMenu();
 
     LOGGER.info("Create starting menu");
-    m_menu = m_menu_mgr.spawnMenu();
     createRandomMenu();
 
     CreateImage(*m_hints, {0, 350});
@@ -154,18 +154,17 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
     //   pass a second parameter to draw() with the desired position
     // m_menu->draw({20, 10});
 
-    m_menu->visible() = (m_game_state == GameState::GAME);
-    m_main_menu->visible() = !m_menu->visible();
+    // m_main_menu->visible() = !m_menu->visible();
 
     //-- Draw all the other menus
     m_menu_mgr.draw();
     if(m_main_menu->visible())
         m_main_menu->moveTo((draw.GetTargetSize() - m_main_menu->Size()) / 2.0f);
 
-    //-- Get the mouse position
+    //-- Get the left mouse button status and handle it
     auto lft_btn_status {mouse.GetButton(0)};
     if(lft_btn_status.bPressed)
-    {
+    {   //-- Get the mouse position
         mouse_pos_pressed = mouse.GetPosition();
         menu_pressed      = m_menu_mgr.menuAt(mouse_pos_pressed);
         menu_offset_pos   = menu_pressed ? (mouse_pos_pressed - menu_pressed->position()) : olc::vf2d(0.0, 0.0);
@@ -197,7 +196,6 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
         }
         else
         {
-            m_menu->onClicked(mouse_pos_pressed);
             m_menu_mgr.onClick(mouse_pos_pressed);
         }
     }
@@ -251,8 +249,8 @@ void Game::configureMap()
 
 void Game::createRandomMenu()
 {
-    m_menu.reset(new menu_t());
-    CreateImage(*m_menu, {10,10});
+    //-- Create a new menu
+    auto menu { m_menu_mgr.spawnMenu() };
 
     //-- Declare as size_t to avoid warning on the for loop below when comparing variables...
     auto randomNumberOfItems = random<size_t, 1, 7>(); // Generate a random number between 1 and 7 this will be the elements shown in the menu
@@ -264,18 +262,14 @@ void Game::createRandomMenu()
 
     //-- Store the item and its corresponding hint that the user has to click on in the game. This is used to
     //   know which item the user has to click on in the game and to show the hint for that item.
-    m_current_pair = std::make_pair(
-        buttonText,
-        hint
-    );
+    m_current_pair = std::make_pair(buttonText, hint);
 
     //-- Remove the index of the item that has been stored as the correct button to click in the game. This
     //   will be used to avoid showing the same item again in the menu.
     eraseUsedIndices(selectedIndex);
 
-    m_menu->items().push_back(
-        std::make_shared<menu::item_t>(buttonText, std::bind_front(&Game::correctButtonClicked, this))
-    ); // Add the correct item to the menu with its corresponding callback
+    //-- Add the correct item to the menu with its corresponding callback
+    menu->items().emplace_back(new menu::item_t(buttonText, std::bind_front(&Game::correctButtonClicked, this)));
     LOGGER.debug("Correct button: '{}'", m_current_pair.first);
     LOGGER.debug(" - Hint: '{}'", m_current_pair.second ); // Show the hint for the item that the user has to click on in the game.
 
@@ -294,12 +288,13 @@ void Game::createRandomMenu()
         int itemIndex = m_unused_indices.at(randomIndex);
         eraseUsedIndices(randomIndex);
         
-        bool randomBool = random(); // Generate a random boolean to decide if we will introduce the item at the beginning or at the end of the menu. This is to avoid having the same item always at the same position in the menu.
+        // Generate a random boolean to decide if we will introduce the item at the beginning or at the end of the menu. This is to avoid having the same item always at the same position in the menu.
+        bool randomBool = random();
 
         // Add the item to the menu with its corresponding callback
         if (randomBool)
         {
-            m_menu->items().emplace_back(
+            menu->items().emplace_back(
                 std::make_shared<menu::item_t>(
                     m_buttons_text.at(itemIndex),
                     std::bind_front(&Game::incorrectButtonClicked, this)
@@ -308,8 +303,8 @@ void Game::createRandomMenu()
         }
         else
         {
-            m_menu->items().insert(
-                m_menu->items().begin(),
+            menu->items().insert(
+                menu->items().begin(),
                 std::make_shared<menu::item_t>(
                     m_buttons_text.at(itemIndex),
                     std::bind_front(&Game::incorrectButtonClicked, this)
@@ -378,6 +373,7 @@ void Game::createMainMenu()
             {
                 LOGGER.info("Init presses");
                 m_game_state = GameState::GAME;
+                // m_main_menu->visible() = false;
                 return true;
             }
         )

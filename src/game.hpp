@@ -90,7 +90,7 @@ namespace codejam26
         static std::mt19937 m_rnd_engine;
 
         menu_s          m_main_menu {nullptr};                   //-- Starting menu
-        menu_s          m_menu      {nullptr};                   //-- To be removed
+        // menu_s          m_menu      {nullptr};                   //-- To be removed
         menu_s          m_hints     {nullptr};                   //-- The hints will be drawn here
         menu::manager_t m_menu_mgr  {};                          //-- Menu manager
 
