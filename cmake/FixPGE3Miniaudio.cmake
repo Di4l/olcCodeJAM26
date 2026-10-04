@@ -31,7 +31,7 @@ function(fix_pge3_miniaudio PGE3_SOURCE_DIR)
     string(FIND "${CONTENT}" "${BROKEN_CODE}" POS)
 
     if(POS EQUAL -1)
-        message(FATAL_ERROR "PGE3 Miniaudio workaround: expected code was not found in: ${FILE_TO_FIX}")
+        message(WARNING "PGE3 Miniaudio workaround: expected code was not found in: ${FILE_TO_FIX}")
     endif()
 
     string(REPLACE

@@ -9,7 +9,7 @@ int main(int /*argc*/, char** /*argv*/)
     constexpr olc::vi2d        WINDOW_SZ { 640, 400 };
 
     //-- The game instance, our main application
-    codejam26::Game game;
+    auto& game { CJGAME };
     //-- Main game configuration
     olc::PGEConfig cfg;
 
