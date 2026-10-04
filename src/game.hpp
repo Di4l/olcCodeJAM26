@@ -9,7 +9,6 @@
 #include <olcPGEX3_Miniaudio.h>
 
 #include "logger.hpp"
-//#include "main_menu_options.hpp"
 #include "menu.hpp"
 
 #include <map>

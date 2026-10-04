@@ -116,14 +116,14 @@ bool Game::OnUserCreate()
 
     LOGGER.info("Create hints rectangle");
     m_hints = std::make_shared<menu_t>();
-    m_hints->items().push_back(std::make_shared<menu::item_t>(SV_HINT.data(), nullptr));
-    CreateImage(*m_hints, {0, 350});
+    // m_hints->items().push_back(std::make_shared<menu::item_t>(SV_HINT.data(), nullptr));
+    CreateImage(*m_hints, {10, 10});
 
     LOGGER.info("Create main menu");
     createMainMenu();
 
-    LOGGER.info("Create starting menu");
-    createRandomMenu();
+    // LOGGER.info("Create starting menu");
+    // createRandomMenu();
 
     LOGGER.info("Game instance created and initialized");
     return true;
@@ -148,14 +148,20 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
     draw.StringProp((wsz - tsz) / 2, SV_INTRO.data());
 
     //-- draw the Hints first, so if anything is overlapped, the Hints are at the bottom
-    auto hsz { m_hints->Size() };
-    m_hints->draw({ (wsz.x - hsz.x) / 2.0f, (wsz.y - hsz.y) - 10.0f });
+    if(m_hints->items().size())
+    {
+        auto hsz { m_hints->Size() };
+        m_hints->draw({ (wsz.x - hsz.x) / 2.0f, (wsz.y - hsz.y) - 10.0f });
+    }
 
     //-- Draw all the other menus
     m_menu_mgr.draw();
     if(m_main_menu->moveable() && m_main_menu->visible())
     {   //-- Draw the main menu in the middle of the Window and then make it fixed (unmoveable)
-        m_main_menu->moveTo((draw.GetTargetSize() - m_main_menu->Size()) / 2.0f);
+        auto mmsz  { m_main_menu->Size() };
+        auto mmpos { (wsz - mmsz) / 2.0f };
+        mmpos.y -= (tsz.y + mmsz.y) / 2.0f + 5.0f;
+        m_main_menu->moveTo(mmpos);
         m_main_menu->moveable() = false;    //-- Lock main menu in place
     }
 
@@ -261,7 +267,7 @@ void Game::createRandomMenu()
     //-- Add the correct item to the menu with its corresponding callback
     menu->items().emplace_back(new menu::item_t(buttonText.data(), std::bind_front(&Game::correctButtonClicked, this)));
     //-- Add the hint to the hints rectangle
-    m_hints->items()[0]->text = std::string(SV_HINT.data()) + hint.data();
+    m_hints->items().emplace_back(new menu::item_t(std::string(SV_HINT.data()) + hint.data(), nullptr));
 
     LOGGER.debug("Correct button: '{}'", buttonText.data());
     LOGGER.debug(" - Hint: '{}'",        hint.data()); // Show the hint for the item that the user has to click on in the game.
@@ -314,6 +320,9 @@ void Game::removeAllGameMenus()
         while(*it == m_main_menu) ++it;
         menus.erase(it);
     }
+    //-- And remove all hints
+    m_hints->items().clear();
+    //-- Then make all menu items available again
     configureMap();
 }
 //-----------------------------------------------------------------------------
@@ -351,21 +360,23 @@ void Game::createMainMenu()
             {
                 LOGGER.info("Init presses");
                 m_game_state = GameState::GAME;
+                createRandomMenu();
                 m_main_menu->visible() = false;
                 return true;
             }
         )
     );
 
-    m_main_menu->items().push_back(std::make_shared<menu::item_t>("Instructions",
-            [&]()
-            {
-                LOGGER.info("EXPLANATION");
-                m_game_state = GameState::EXPLANATION;
-                return true;
-            }
-        )
-    );
+    //-- Explanation is on the main Window, no need for this option
+    // m_main_menu->items().push_back(std::make_shared<menu::item_t>("Instructions",
+    //         [&]()
+    //         {
+    //             LOGGER.info("EXPLANATION");
+    //             m_game_state = GameState::EXPLANATION;
+    //             return true;
+    //         }
+    //     )
+    // );
 
     m_main_menu->items().push_back(std::make_shared<menu::item_t>("Exit",
             [&]()
