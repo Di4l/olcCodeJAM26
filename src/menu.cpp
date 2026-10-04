@@ -49,10 +49,6 @@ void menu_t::draw(olc::vf2d const& pos)
 
     auto& ge_draw { CJGAME.GetDraw() };
 
-    //-- If position has been informed, update it
-    if (&pos != &INVALID_VF2D)
-        m_pos = pos;
-
     //-- Store the total size of the menu
     olc::vf2d menu_sz {0.0, 0.0};
     //-- Calculate total size of menu from its items
@@ -66,6 +62,18 @@ void menu_t::draw(olc::vf2d const& pos)
     //-- Resize menu to accomodate all its entries
     menu_sz.y -= MENU_ITEM_GAP;
     Resize(menu_sz + (MENU_MARGIN * 2.0f));
+
+    //-- If position has been informed, update it
+    if (&pos != &INVALID_VF2D)
+    {
+        m_pos = pos;
+    }
+    else if(m_new)
+    {   //-- If it is the first time drawn, and no position has been set, make choose a random pos
+        auto wsz { (ge_draw.GetTargetSize() - menu_sz) * 3.0f / 4.0f };
+        m_pos = { CJGAME.random<float>(0.0f, wsz.x) + wsz.x / 6.0f, CJGAME.random<float>(0.0f, wsz.y) + wsz.y / 6.0f };
+    }
+    m_new = false;
 
     //-- Start drawing the menu
     ge_draw.SetTarget(*this);

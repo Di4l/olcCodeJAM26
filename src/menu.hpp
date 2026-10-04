@@ -61,10 +61,11 @@ namespace codejam26
         [[nodiscard]] menu::item_s clickedItem(olc::vf2d const& relpos);
 
     private:
-        olc::vf2d   m_pos     {0,0};
-        bool        m_visible {true};
+        olc::vf2d   m_pos      {0,0};
+        bool        m_visible  {true};
         bool        m_moveable {true};
-        menu::items m_items   {};
+        bool        m_new      {true};
+        menu::items m_items    {};
     };
     //-------------------------------------------------------------------------
     using menu_s  = std::shared_ptr<menu_t>;
