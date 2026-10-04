@@ -204,10 +204,11 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
         }
     }
 
-    // if (m_game_state == GameState::MAIN_MENU)
+    // switch(m_game_state)
     // {
-    //     main_menu->draw(halfScreen);
-    //     main_menu->configureMouse(this, mouse);
+    // case GameState::MAIN_MENU:
+    //     m_main_menu->visible() = true;
+    //     break;
     // }
     // else if (m_game_state == GameState::EXPLANATION)
     // {
@@ -265,7 +266,10 @@ void Game::createRandomMenu()
     m_available_items.erase(m_available_items.begin() + selectedIndex);
 
     //-- Add the correct item to the menu with its corresponding callback
-    menu->items().emplace_back(new menu::item_t(buttonText.data(), std::bind_front(&Game::correctButtonClicked, this)));
+    if(std::string(buttonText) == "Quit Game")
+        menu->items().emplace_back(new menu::item_t(buttonText.data(), std::bind_front(&Game::quitGameButtonCliked, this)));
+    else
+        menu->items().emplace_back(new menu::item_t(buttonText.data(), std::bind_front(&Game::correctButtonClicked, this)));
     //-- Add the hint to the hints rectangle
     m_hints->items().emplace_back(new menu::item_t(std::string(SV_HINT.data()) + hint.data(), nullptr));
 
@@ -347,6 +351,23 @@ bool Game::correctButtonClicked()
                  // clicked on the menu items before the game ends.
     playCorrectSound();
     createRandomMenu();
+    return true;
+}
+//-----------------------------------------------------------------------------
+
+bool Game::quitGameButtonCliked()
+{
+    LOGGER.debug("End game!!!");
+    //-- se puede calcular aquí el final score basado en el numero de clicks...
+    //   el numero de menus en juego y el numero de opciones totales que existen (40)
+    playCorrectSound(); //-- Se puede implementar un sonido nuevo de "win"
+    removeAllGameMenus();
+
+    //-- In theory, changing the state of the game should do the rest of the setup:
+    //   make the main menu visible again, etc...
+    // m_game_state = GameState::MAIN_MENU;
+    m_main_menu->visible() = true;
+
     return true;
 }
 //-----------------------------------------------------------------------------

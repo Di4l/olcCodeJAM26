@@ -85,6 +85,7 @@ namespace codejam26
 
         bool incorrectButtonClicked();
         bool correctButtonClicked();
+        bool quitGameButtonCliked();
 
         olc::ext::Miniaudio::AudioEngine m_audio       {};
         olc::ext::Miniaudio::Sound       m_sound_click {};
