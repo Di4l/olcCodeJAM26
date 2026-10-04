@@ -204,12 +204,18 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
         }
     }
 
-    // switch(m_game_state)
-    // {
+    switch(m_game_state)
+    {
     // case GameState::MAIN_MENU:
     //     m_main_menu->visible() = true;
     //     break;
-    // }
+    case GameState::EXIT:
+        //-- This is far from ideal, but I do not know how to tell olcPixelGameEngfine to terminate
+        exit(0);
+        break;
+
+    default: break;
+    }
     // else if (m_game_state == GameState::EXPLANATION)
     // {
     //     std::string explicationText = "Valid text";
