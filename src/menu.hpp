@@ -50,7 +50,7 @@ namespace codejam26
         [[nodiscard]] inline bool&        moveable() { return m_moveable; }
         [[nodiscard]] inline menu::items& items()    { return m_items;    }
 
-        inline void moveTo(olc::vf2d const& pos) { if(m_moveable) m_pos = pos; }
+        void moveTo(olc::vf2d const& pos) { if(m_moveable) m_pos = pos; }
 
         [[maybe_unused]] bool onClicked(olc::vf2d const& pos);
         [[nodiscard]]    bool isHit(olc::vf2d const& pos);

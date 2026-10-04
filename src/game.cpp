@@ -149,12 +149,6 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
     auto hsz { m_hints->Size() };
     m_hints->draw({ (wsz.x - hsz.x) / 2.0f, (wsz.y - hsz.y) - 10.0f });
 
-    //-- If we wanted to draw the menu at a different coordinates, we could
-    //   pass a second parameter to draw() with the desired position
-    // m_menu->draw({20, 10});
-
-    // m_main_menu->visible() = !m_menu->visible();
-
     //-- Draw all the other menus
     m_menu_mgr.draw();
     if(m_main_menu->moveable() && m_main_menu->visible())
@@ -235,6 +229,7 @@ bool Game::OnUserUpdate(float /*fElapsedTime*/)
 
 void Game::configureMap()
 {
+    LOGGER.debug("Populating available items with ALL possible");
     for(auto const& [txt, _] : MITM_MAP)
         m_available_items.push_back(txt.data());
 }
@@ -306,12 +301,28 @@ void Game::createRandomMenu()
 }
 //-----------------------------------------------------------------------------
 
+void Game::removeAllGameMenus()
+{
+    //-- Need to erase all menus (but the main one)
+    LOGGER.debug("Erase all game menus...");
+    auto& menus { m_menu_mgr.menus() };
+    while(menus.size() > 1)
+    {
+        auto it { menus.begin() };
+        while(*it == m_main_menu) ++it;
+        menus.erase(it);
+    }
+    LOGGER.info("  - total menus in game: {}", menus.size() - 1);
+    configureMap();
+}
+//-----------------------------------------------------------------------------
+
 bool Game::incorrectButtonClicked()
 {
     LOGGER.debug("Incorrect!!");
     m_counter = 0; // Reset the counter to 0 if the user clicks on an incorrect item. This is to avoid showing
                    // the "Quit Game" option too soon.
-    // configureMap();
+    removeAllGameMenus();
     createRandomMenu();
     return true;
 }

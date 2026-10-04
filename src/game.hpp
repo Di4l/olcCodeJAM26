@@ -78,6 +78,7 @@ namespace codejam26
 
         void initializeAudioEngine();
         void configureMap();
+        void removeAllGameMenus();
 
         bool incorrectButtonClicked();
         bool correctButtonClicked();
