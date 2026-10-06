@@ -45,8 +45,8 @@ We would like to take the opportunity to congratulate *One Lone Coder* and the *
 
 ## Authors
 This has been coded by a small team of 3 people:
-    Alejandro Vaquero
-    Alejandro Romero
-    Raúl Hermoso (aka wowLinh, Linh, Di4l).
+1. Alejandro Vaquero
+2. Alejandro Romero
+3. Raúl Hermoso (aka wowLinh, Linh, Di4l).
 
 Special thanks must be given to **Daniel Lianes** for the ideas given at the initial stages of the project.
