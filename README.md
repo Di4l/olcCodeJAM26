@@ -17,7 +17,7 @@ A very simple and featureless menu manager has been written from scratch, using 
 
 Managing the download and generation of building environment is done via cmake. The project should compile in Windows and Linux and generate a final single binary file. That is all that is needed to run and play the game.
 
-### A
+### Use of Artificial Intelligence
 AI has been used just to create the .cmake files in the cmake folder.
 
 ### Building the project
