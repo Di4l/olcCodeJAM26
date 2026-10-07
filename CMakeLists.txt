@@ -73,6 +73,12 @@ add_library(pge3_static STATIC
     src/pge3.cpp
 )
 
+if(EMSCRIPTEN)
+    target_compile_options(pge3_static PRIVATE
+        "-sUSE_LIBPNG=1"
+    )
+endif()
+
 target_include_directories(pge3_static PRIVATE
     ${olcpixelgameengine3_SOURCE_DIR}
     # The miniaudio extension olcPGEX3_Miniaudio.h requires
@@ -106,6 +112,19 @@ add_executable(${PROJECT_NAME}
     ${GAME_HEADERS}
     ${GAME_SOURCES}
 )
+
+if(EMSCRIPTEN)
+
+    target_link_options(${PROJECT_NAME} PRIVATE
+        "-sUSE_LIBPNG=1"
+        "-sASYNCIFY"
+        "-sALLOW_MEMORY_GROWTH=1"
+        "-sSTACK_SIZE=1048576"
+        "-sMAX_WEBGL_VERSION=2"
+        "-sMIN_WEBGL_VERSION=2"
+    )
+endif()
+
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG>
@@ -143,7 +162,7 @@ embed_asset(${PROJECT_NAME}
 # Linux dependencies
 # ============================================================
 
-if(UNIX AND NOT APPLE)
+if(UNIX AND NOT APPLE AND NOT EMSCRIPTEN)
 
     find_package(PNG REQUIRED)
     find_package(OpenGL REQUIRED)
